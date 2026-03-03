@@ -1,0 +1,2 @@
+# sokotroskis
+SOKOTROSKIS APP
