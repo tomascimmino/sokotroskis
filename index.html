@@ -363,13 +363,13 @@ function renderAttendance() {
   const myDiv = document.getElementById('myAttend');
   myDiv.innerHTML = `
     <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:8px;">
-      <button onclick="setAttendance(1)"" style="
+      <button onclick="setAttendance(1)" style="
         padding:22px 10px;border-radius:16px;border:2px solid ${v===true?'var(--green)':'var(--border)'};
         background:${v===true?'#0a1f12':'var(--card)'};color:${v===true?'#2ecc71':'var(--muted)'};
         font-size:1.5rem;font-weight:900;cursor:pointer;transition:all .2s;display:flex;flex-direction:column;align-items:center;gap:6px;">
         ✅<span style="font-size:.8rem;letter-spacing:1px;">VOY</span>
       </button>
-      <button onclick="setAttendance(0)"" style="
+      <button onclick="setAttendance(0)" style="
         padding:22px 10px;border-radius:16px;border:2px solid ${v===false?'var(--red)':'var(--border)'};
         background:${v===false?'#1f0a0a':'var(--card)'};color:${v===false?'var(--red)':'var(--muted)'};
         font-size:1.5rem;font-weight:900;cursor:pointer;transition:all .2s;display:flex;flex-direction:column;align-items:center;gap:6px;">
@@ -391,6 +391,7 @@ function renderAttendance() {
       <div class="pstatus" style="font-size:1.1rem;margin-top:4px">${pv===true?'✅':pv===false?'❌':'❓'}</div>`;
     grid.appendChild(card);
   });
+}
 async function loadPesosParaPerson(persona) {
   if (cache.pesos[persona]) return;
   try {
