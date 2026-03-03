@@ -248,7 +248,7 @@ const GYM_DAYS=['Lunes','Miercoles','Jueves','Viernes'];
 let cache = { asistencia: null, pesos: {}, records: [] };
 let ME = localStorage.getItem('sokoUser') || null;
 const today = new Date();
-const todayDay = DAY_NAMES[today.getDay()];
+const todayDay = 'Lunes';
 const todayStr = today.toISOString().split('T')[0];
 const isRest = !ROUTINE[todayDay] || ROUTINE[todayDay].exercises.length === 0;
 
