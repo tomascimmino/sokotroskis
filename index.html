@@ -8,8 +8,6 @@
     *{margin:0;padding:0;box-sizing:border-box;}
     :root{--red:#e94560;--bg:#0f0f0f;--card:#1a1a1a;--card2:#222;--border:#2a2a2a;--green:#27ae60;--muted:#888;}
     body{font-family:'Segoe UI',sans-serif;background:var(--bg);color:#fff;max-width:520px;margin:0 auto;min-height:100vh;}
-
-    /* LOGIN */
     #loginScreen{position:fixed;inset:0;background:#0f0f0f;z-index:200;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:32px 24px;}
     .login-logo{font-size:3.5rem;margin-bottom:6px;}
     .login-title{font-size:2rem;font-weight:900;letter-spacing:3px;color:var(--red);margin-bottom:4px;}
@@ -18,25 +16,19 @@
     .login-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;width:100%;max-width:340px;}
     .login-btn{background:var(--card);border:2px solid var(--border);border-radius:18px;padding:22px 12px;text-align:center;cursor:pointer;transition:all .2s;user-select:none;}
     .login-btn:active{transform:scale(.95);}
-    .login-btn .lav{width:58px;height:58px;border-radius:50%;margin:0 auto 10px;display:flex;align-items:center;justify-content:center;font-size:1.6rem;font-weight:900;transition:all .2s;}
+    .login-btn .lav{width:58px;height:58px;border-radius:50%;margin:0 auto 10px;display:flex;align-items:center;justify-content:center;font-size:1.6rem;font-weight:900;}
     .login-btn .lnm{font-size:1.05rem;font-weight:800;}
     .login-btn .lsub{font-size:0.65rem;color:var(--muted);margin-top:3px;}
     .login-btn:hover{border-color:var(--red);background:#1e0d10;}
-
-    /* HEADER */
     header{background:linear-gradient(135deg,#1a1a2e,#16213e);padding:16px 18px 12px;border-bottom:2px solid var(--red);display:flex;align-items:center;justify-content:space-between;}
     header h1{font-size:1.4rem;font-weight:900;letter-spacing:2px;color:var(--red);}
     .user-chip{display:flex;align-items:center;gap:8px;background:#111;border:1px solid var(--border);border-radius:20px;padding:5px 10px 5px 5px;cursor:pointer;}
     .uc-av{width:26px;height:26px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:.75rem;font-weight:900;}
     .uc-name{font-size:.75rem;font-weight:700;}
-
-    /* BANNER */
     .day-banner{padding:14px 18px;display:flex;align-items:center;justify-content:space-between;background:#14101a;border-bottom:1px solid var(--border);}
     .db-label{font-size:.65rem;letter-spacing:2px;text-transform:uppercase;color:var(--red);font-weight:700;}
     .db-title{font-size:1.25rem;font-weight:900;margin-top:2px;}
     .day-badge{background:var(--red);border-radius:10px;padding:5px 12px;font-size:.72rem;font-weight:800;text-transform:uppercase;letter-spacing:1px;}
-
-    /* REST DAY */
     #restView{padding:16px 16px 90px;}
     .rest-hero{background:linear-gradient(135deg,#1a1020,#0f0f1a);border:1.5px solid #2a1a2a;border-radius:20px;padding:28px 20px;text-align:center;margin-bottom:14px;}
     .rest-big{font-size:3.5rem;margin-bottom:10px;}
@@ -60,8 +52,6 @@
     .streak-item{text-align:center;}
     .streak-n{font-size:1.6rem;font-weight:900;color:var(--red);}
     .streak-l{font-size:.62rem;text-transform:uppercase;letter-spacing:1px;color:var(--muted);margin-top:2px;}
-
-    /* GYM VIEW */
     #gymView{padding:16px 16px 90px;}
     .section{margin-bottom:22px;}
     .section-title{font-size:.68rem;letter-spacing:2px;text-transform:uppercase;color:var(--red);font-weight:800;margin-bottom:10px;}
@@ -83,6 +73,11 @@
     .pname{font-size:.65rem;font-weight:700;text-transform:uppercase;letter-spacing:.5px;}
     .pstatus{font-size:.9rem;margin-top:3px;}
     .my-badge{font-size:.5rem;text-transform:uppercase;letter-spacing:.5px;color:var(--red);font-weight:700;margin-top:2px;}
+    .sync-badge{display:inline-flex;align-items:center;gap:4px;font-size:.6rem;color:var(--muted);margin-bottom:8px;}
+    .sync-dot{width:6px;height:6px;border-radius:50%;background:var(--green);}
+    .sync-dot.syncing{background:#f39c12;animation:pulse .8s infinite;}
+    .sync-dot.error{background:var(--red);}
+    @keyframes pulse{0%,100%{opacity:1;}50%{opacity:.3;}}
     .person-selector{display:flex;gap:6px;margin-bottom:14px;flex-wrap:wrap;}
     .psel-btn{background:var(--card);border:1.5px solid var(--border);border-radius:8px;padding:5px 12px;font-size:.72rem;font-weight:700;cursor:pointer;color:#aaa;transition:all .15s;}
     .psel-btn.active{background:#1e0d10;border-color:var(--red);color:var(--red);}
@@ -98,8 +93,6 @@
     .weight-btn.empty{background:var(--card2);border:1px dashed var(--border);color:var(--muted);}
     .weight-btn:disabled{opacity:.35;cursor:default;}
     .record-badge{background:#f39c12;color:#000;border-radius:6px;padding:3px 7px;font-size:.65rem;font-weight:800;}
-
-    /* MODAL */
     .modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,.85);z-index:100;display:flex;align-items:flex-end;justify-content:center;opacity:0;pointer-events:none;transition:opacity .2s;}
     .modal-overlay.open{opacity:1;pointer-events:all;}
     .modal{background:#1c1c1c;border-radius:20px 20px 0 0;border-top:2px solid var(--red);padding:24px 20px;width:100%;max-width:520px;transform:translateY(40px);transition:transform .2s;}
@@ -115,8 +108,6 @@
     .hist-row:last-child{border:none;} .hist-date{color:var(--muted);} .hist-w{font-weight:700;color:var(--red);}
     .btn-save{background:var(--red);border:none;border-radius:12px;padding:13px;width:100%;color:#fff;font-size:.95rem;font-weight:800;cursor:pointer;letter-spacing:1px;}
     .btn-cancel{background:none;border:none;color:var(--muted);font-size:.8rem;cursor:pointer;width:100%;padding:8px;margin-top:4px;}
-
-    /* PAGES */
     .page-inner{padding:16px 16px 90px;}
     .stats-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;}
     .stat-card{background:var(--card);border:1.5px solid var(--border);border-radius:12px;padding:14px;text-align:center;}
@@ -128,27 +119,30 @@
     .hist-ex-body{padding:0 14px 10px;display:none;} .hist-ex-body.open{display:block;}
     .hist-ex-row{display:flex;justify-content:space-between;font-size:.78rem;padding:5px 0;border-bottom:1px solid var(--border);}
     .hist-ex-row:last-child{border:none;}
-
-    /* NAV */
     .nav-bar{position:fixed;bottom:0;left:50%;transform:translateX(-50%);width:100%;max-width:520px;background:#151515;border-top:1px solid var(--border);display:flex;justify-content:space-around;padding:10px 0 14px;z-index:50;}
     .nav-item{display:flex;flex-direction:column;align-items:center;gap:3px;cursor:pointer;padding:4px 14px;border-radius:8px;}
     .nav-item.active{color:var(--red);} .nav-item:not(.active){color:#444;}
     .nav-icon{font-size:1.25rem;} .nav-label{font-size:.58rem;text-transform:uppercase;letter-spacing:.8px;font-weight:700;}
     .hidden{display:none!important;}
+    .loading{text-align:center;padding:40px;color:var(--muted);}
+    .loading .spin{font-size:2rem;animation:spin 1s linear infinite;display:block;margin-bottom:8px;}
+    @keyframes spin{to{transform:rotate(360deg);}}
+    .toast{position:fixed;bottom:80px;left:50%;transform:translateX(-50%);background:#1c1c1c;border:1px solid var(--border);border-radius:10px;padding:10px 18px;font-size:.8rem;font-weight:700;z-index:300;opacity:0;transition:opacity .3s;pointer-events:none;}
+    .toast.show{opacity:1;}
+    .toast.ok{border-color:var(--green);color:var(--green);}
+    .toast.err{border-color:var(--red);color:var(--red);}
   </style>
 </head>
 <body>
 
-<!-- LOGIN -->
 <div id="loginScreen">
   <div class="login-logo">🏋️</div>
   <div class="login-title">SOKOTROSKIS</div>
-  <div class="login-sub">¿Quién sos hoy?</div>
+  <div class="login-sub">¿Quién sos?</div>
   <div class="login-label">Seleccioná tu nombre</div>
   <div class="login-grid" id="loginGrid"></div>
 </div>
 
-<!-- APP -->
 <div id="app" class="hidden">
   <header>
     <h1>🏋️ SOKOTROSKIS</h1>
@@ -166,7 +160,9 @@
     </div>
     <div style="padding:0 16px">
       <div class="section" style="margin-top:20px">
-        <div class="section-title">¿Quién va hoy?</div>
+        <div class="section-title">¿Quién va hoy?
+          <span class="sync-badge" id="syncBadge"><span class="sync-dot" id="syncDot"></span><span id="syncTxt">sincronizado</span></span>
+        </div>
         <div class="attend-grid" id="attendGrid"></div>
       </div>
       <div class="section">
@@ -202,11 +198,15 @@
   </div>
 </div>
 
+<div class="toast" id="toast"></div>
+
 <script>
-const PERSONS=['Fede','Toti','Matu','Pepo','Jordan'];
-const PI={Fede:'F',Toti:'T',Matu:'M',Pepo:'P',Jordan:'J'};
-const COLORS={Fede:'#e94560',Toti:'#3498db',Matu:'#2ecc71',Pepo:'#f39c12',Jordan:'#9b59b6'};
-const ROUTINE={
+const API = 'https://script.google.com/macros/s/AKfycbzPtXxxYOsjXCsnLR6ApckENIEghkiKC6hKwwqg9aWSusBbofi_T7yl8jN9gLFdQXri/exec';
+
+const PERSONS = ['Fede','Toti','Matu','Pepo','Jordan'];
+const PI = {Fede:'F',Toti:'T',Matu:'M',Pepo:'P',Jordan:'J'};
+const COLORS = {Fede:'#e94560',Toti:'#3498db',Matu:'#2ecc71',Pepo:'#f39c12',Jordan:'#9b59b6'};
+const ROUTINE = {
   Lunes:{emoji:'🦵',muscle:'Piernas',exercises:[
     {name:'Extensión de cuádricep',series:3,repsMin:12,repsMax:15,note:'dropset'},
     {name:'Sentadilla Hack',series:3,repsMin:8,repsMax:12},
@@ -243,81 +243,119 @@ const ROUTINE={
 };
 const DAY_NAMES=['Domingo','Lunes','Martes','Miercoles','Jueves','Viernes','Sabado'];
 const GYM_DAYS=['Lunes','Miercoles','Jueves','Viernes'];
-let S=JSON.parse(localStorage.getItem('sokoState')||'{}');
-if(!S.attendance)S.attendance={};if(!S.weights)S.weights={};if(!S.records)S.records={};
-const save=()=>localStorage.setItem('sokoState',JSON.stringify(S));
-let ME=localStorage.getItem('sokoUser')||null;
-const today=new Date();
-const todayDay=DAY_NAMES[today.getDay()];
-const todayStr=today.toISOString().split('T')[0];
-const isRest=!ROUTINE[todayDay]||ROUTINE[todayDay].exercises.length===0;
 
-function buildLogin(){
-  const g=document.getElementById('loginGrid');g.innerHTML='';
-  PERSONS.forEach(p=>{
-    const b=document.createElement('div');b.className='login-btn';
-    b.innerHTML=`<div class="lav" style="background:${COLORS[p]}22;color:${COLORS[p]}">${PI[p]}</div><div class="lnm">${p}</div><div class="lsub"></div>`;
-    b.onclick=()=>login(p);g.appendChild(b);
+// Cache local para no recargar todo el tiempo
+let cache = { asistencia: null, pesos: {}, records: [] };
+let ME = localStorage.getItem('sokoUser') || null;
+const today = new Date();
+const todayDay = DAY_NAMES[today.getDay()];
+const todayStr = today.toISOString().split('T')[0];
+const isRest = !ROUTINE[todayDay] || ROUTINE[todayDay].exercises.length === 0;
+
+// ── API ──────────────────────────────────────
+async function api(params) {
+  const url = API + '?' + new URLSearchParams(params).toString();
+  const res = await fetch(url);
+  return res.json();
+}
+
+function setSyncStatus(status) {
+  const dot = document.getElementById('syncDot');
+  const txt = document.getElementById('syncTxt');
+  if (!dot) return;
+  dot.className = 'sync-dot' + (status === 'syncing' ? ' syncing' : status === 'error' ? ' error' : '');
+  txt.textContent = status === 'syncing' ? 'sincronizando...' : status === 'error' ? 'sin conexión' : 'sincronizado';
+}
+
+function showToast(msg, type='ok') {
+  const t = document.getElementById('toast');
+  t.textContent = msg; t.className = `toast ${type} show`;
+  setTimeout(() => t.classList.remove('show'), 2500);
+}
+
+// ── LOGIN ────────────────────────────────────
+function buildLogin() {
+  const g = document.getElementById('loginGrid'); g.innerHTML = '';
+  PERSONS.forEach(p => {
+    const b = document.createElement('div'); b.className = 'login-btn';
+    b.innerHTML = `<div class="lav" style="background:${COLORS[p]}22;color:${COLORS[p]}">${PI[p]}</div><div class="lnm">${p}</div><div class="lsub"></div>`;
+    b.onclick = () => login(p); g.appendChild(b);
   });
 }
-function login(p){
-  ME=p;localStorage.setItem('sokoUser',p);
+function login(p) {
+  ME = p; localStorage.setItem('sokoUser', p);
   document.getElementById('loginScreen').classList.add('hidden');
   document.getElementById('app').classList.remove('hidden');
   document.getElementById('navBar').classList.remove('hidden');
   initApp();
 }
-function logout(){
-  if(!confirm('¿Cambiar de usuario?'))return;
-  localStorage.removeItem('sokoUser');ME=null;
+function logout() {
+  if (!confirm('¿Cambiar de usuario?')) return;
+  localStorage.removeItem('sokoUser'); ME = null;
   document.getElementById('app').classList.add('hidden');
   document.getElementById('navBar').classList.add('hidden');
   document.getElementById('loginScreen').classList.remove('hidden');
 }
-function initApp(){
-  document.getElementById('ucAv').textContent=PI[ME];
-  document.getElementById('ucAv').style.background=COLORS[ME];
-  document.getElementById('ucName').textContent=ME;
-  renderBanner();showPage('hoy');
+
+// ── INIT ─────────────────────────────────────
+function initApp() {
+  document.getElementById('ucAv').textContent = PI[ME];
+  document.getElementById('ucAv').style.background = COLORS[ME];
+  document.getElementById('ucName').textContent = ME;
+  renderBanner();
+  showPage('hoy');
 }
-function renderBanner(){
-  const r=ROUTINE[todayDay],el=document.getElementById('dayBanner');
-  const dateStr=today.toLocaleDateString('es-AR',{weekday:'long',day:'numeric',month:'long'});
-  if(isRest){
-    el.innerHTML=`<div><div class="db-label">${dateStr}</div><div class="db-title">😴 Día de descanso</div></div>`;
+
+function renderBanner() {
+  const r = ROUTINE[todayDay], el = document.getElementById('dayBanner');
+  const dateStr = today.toLocaleDateString('es-AR', {weekday:'long', day:'numeric', month:'long'});
+  if (isRest) {
+    el.innerHTML = `<div><div class="db-label">${dateStr}</div><div class="db-title">😴 Día de descanso</div></div>`;
   } else {
-    const idx=GYM_DAYS.indexOf(todayDay)+1;
-    el.innerHTML=`<div><div class="db-label">${dateStr}</div><div class="db-title">${r.emoji} ${r.muscle}</div></div><div class="day-badge">Día ${idx} de 4</div>`;
+    const idx = GYM_DAYS.indexOf(todayDay) + 1;
+    el.innerHTML = `<div><div class="db-label">${dateStr}</div><div class="db-title">${r.emoji} ${r.muscle}</div></div><div class="day-badge">Día ${idx} de 4</div>`;
   }
 }
-function buildRestDay(){
-  const ti=DAY_NAMES.indexOf(todayDay);let next=null;
-  for(let i=1;i<=7;i++){const d=DAY_NAMES[(ti+i)%7];if(GYM_DAYS.includes(d)){next=d;break;}}
-  const month=todayStr.slice(0,7);
-  const cnt={};PERSONS.forEach(p=>{cnt[p]=0;});
-  Object.entries(S.attendance).forEach(([d,ps])=>{
-    if(!d.startsWith(month))return;
-    Object.entries(ps).forEach(([p,v])=>{if(v)cnt[p]++;});
-  });
-  const maxCnt=Math.max(1,...Object.values(cnt));
-  const totalDays=new Set(Object.keys(S.attendance).filter(d=>d.startsWith(month))).size;
-  const el=document.getElementById('restView');
-  el.innerHTML=`
+
+// ── REST DAY ─────────────────────────────────
+async function buildRestDay() {
+  const ti = DAY_NAMES.indexOf(todayDay); let next = null;
+  for (let i = 1; i <= 7; i++) { const d = DAY_NAMES[(ti+i)%7]; if (GYM_DAYS.includes(d)) { next = d; break; } }
+
+  // Cargar asistencia del mes desde Sheet
+  const month = todayStr.slice(0, 7);
+  let cnt = {}; PERSONS.forEach(p => { cnt[p] = 0; });
+
+  try {
+    const data = await api({ action: 'getAsistenciaMes', mes: month });
+    if (Array.isArray(data)) {
+      data.forEach(row => {
+        PERSONS.forEach(p => { if (row[p.toLowerCase()] === 1 || row[p.toLowerCase()] === '1') cnt[p]++; });
+      });
+    }
+  } catch(e) {}
+
+  const maxCnt = Math.max(1, ...Object.values(cnt));
+  const totalDays = Object.values(cnt).reduce((a, b) => Math.max(a, b), 0) > 0
+    ? Object.keys(cnt).reduce((acc, p) => Math.max(acc, cnt[p]), 0)
+    : 1;
+
+  document.getElementById('restView').innerHTML = `
     <div class="rest-hero">
       <div class="rest-big">💤</div>
       <h2>Día de descanso</h2>
       <p>El músculo crece cuando descansás.<br>Hoy toca recuperar, mañana volvemos con todo.</p>
     </div>
-    ${next?`<div class="info-card">
+    ${next ? `<div class="info-card">
       <div class="info-card-title">Próximo entrenamiento</div>
       <div class="next-row">
         <div><div class="next-name">${ROUTINE[next].muscle}</div><div class="next-day">${next}</div></div>
         <div class="next-emoji">${ROUTINE[next].emoji}</div>
       </div>
-    </div>`:''}
+    </div>` : ''}
     <div class="info-card">
       <div class="info-card-title">Asistencia del grupo — ${today.toLocaleDateString('es-AR',{month:'long'})}</div>
-      ${PERSONS.map(p=>`
+      ${PERSONS.map(p => `
         <div class="ra-row">
           <div class="ra-person">
             <div class="ra-av" style="color:${COLORS[p]}">${PI[p]}</div>
@@ -331,183 +369,304 @@ function buildRestDay(){
       <div class="info-card-title">Tu mes, ${ME}</div>
       <div class="streak-row">
         <div class="streak-item"><div class="streak-n">${cnt[ME]}</div><div class="streak-l">Sesiones</div></div>
-        <div class="streak-item"><div class="streak-n">${totalDays?Math.round(cnt[ME]/totalDays*100):0}%</div><div class="streak-l">Asistencia</div></div>
+        <div class="streak-item"><div class="streak-n">${totalDays ? Math.round(cnt[ME]/totalDays*100) : 0}%</div><div class="streak-l">Asistencia</div></div>
         <div class="streak-item"><div class="streak-n">${[...PERSONS].sort((a,b)=>cnt[b]-cnt[a]).indexOf(ME)+1}°</div><div class="streak-l">Ranking</div></div>
       </div>
     </div>`;
 }
-function buildWeekStrip(){
-  const el=document.getElementById('weekStrip');el.innerHTML='';
-  GYM_DAYS.forEach(d=>{
-    const r=ROUTINE[d],div=document.createElement('div');
-    div.className='wday'+(d===todayDay?' active':'');
-    div.innerHTML=`<div class="wd-name">${d.slice(0,3)}</div><div class="wd-emoji">${r.emoji}</div><div class="wd-muscle">${r.muscle}</div>`;
+
+// ── GYM DAY ──────────────────────────────────
+function buildWeekStrip() {
+  const el = document.getElementById('weekStrip'); el.innerHTML = '';
+  GYM_DAYS.forEach(d => {
+    const r = ROUTINE[d], div = document.createElement('div');
+    div.className = 'wday' + (d === todayDay ? ' active' : '');
+    div.innerHTML = `<div class="wd-name">${d.slice(0,3)}</div><div class="wd-emoji">${r.emoji}</div><div class="wd-muscle">${r.muscle}</div>`;
     el.appendChild(div);
   });
 }
-function buildAttendance(){
-  const grid=document.getElementById('attendGrid');grid.innerHTML='';
-  if(!S.attendance[todayStr])S.attendance[todayStr]={};
-  PERSONS.forEach(p=>{
-    const v=S.attendance[todayStr][p],isMe=p===ME;
-    const card=document.createElement('div');
-    card.className='pcard'+(v===true?' going':v===false?' nope':'')+(isMe?' me':' other');
-    card.innerHTML=`<div class="pavatar" style="${isMe?'outline:2px solid '+COLORS[ME]+';outline-offset:2px':''}">${PI[p]}</div><div class="pname">${p}</div><div class="pstatus">${v===true?'✅':v===false?'❌':'❓'}</div>${isMe?'<div class="my-badge">▲ vos</div>':''}`;
-    if(isMe)card.onclick=()=>{
-      const c=S.attendance[todayStr][p];
-      if(c===undefined)S.attendance[todayStr][p]=true;
-      else if(c===true)S.attendance[todayStr][p]=false;
-      else delete S.attendance[todayStr][p];
-      save();buildAttendance();
-    };
+
+async function buildAttendance() {
+  setSyncStatus('syncing');
+  try {
+    const data = await api({ action: 'getAsistencia', fecha: todayStr });
+    cache.asistencia = data;
+    setSyncStatus('ok');
+  } catch(e) {
+    setSyncStatus('error');
+  }
+  renderAttendance();
+}
+
+function renderAttendance() {
+  const grid = document.getElementById('attendGrid'); grid.innerHTML = '';
+  const d = cache.asistencia || {};
+  PERSONS.forEach(p => {
+    const val = d[p.toLowerCase()];
+    const v = val === 1 || val === '1' ? true : val === 0 || val === '0' ? false : null;
+    const isMe = p === ME;
+    const card = document.createElement('div');
+    card.className = 'pcard' + (v===true?' going':v===false?' nope':'') + (isMe?' me':' other');
+    card.innerHTML = `<div class="pavatar" style="${isMe?'outline:2px solid '+COLORS[ME]+';outline-offset:2px':''}">${PI[p]}</div><div class="pname">${p}</div><div class="pstatus">${v===true?'✅':v===false?'❌':'❓'}</div>${isMe?'<div class="my-badge">▲ vos</div>':''}`;
+    if (isMe) card.onclick = () => toggleAttendance(v);
     grid.appendChild(card);
   });
 }
-let selP=null;
-function buildExercises(){
-  const r=ROUTINE[todayDay];if(!r||!r.exercises.length)return;
-  if(!selP)selP=ME;
-  document.getElementById('exSectionTitle').textContent=`Ejercicios · ${r.muscle}`;
-  buildPersonSelector();buildExList();
+
+async function toggleAttendance(current) {
+  const newVal = current === true ? 0 : 1;
+  setSyncStatus('syncing');
+  // Optimistic update
+  if (!cache.asistencia) cache.asistencia = {};
+  cache.asistencia[ME.toLowerCase()] = newVal;
+  renderAttendance();
+  try {
+    await api({
+      action: 'setAsistencia',
+      fecha: todayStr,
+      dia_semana: todayDay,
+      musculo: ROUTINE[todayDay].muscle,
+      persona: ME,
+      valor: newVal
+    });
+    setSyncStatus('ok');
+    showToast(newVal === 1 ? '✅ ¡Vas hoy!' : '❌ No vas hoy', newVal === 1 ? 'ok' : 'err');
+  } catch(e) {
+    setSyncStatus('error');
+    showToast('Error al guardar', 'err');
+  }
 }
-function buildPersonSelector(){
-  const el=document.getElementById('personSelector');el.innerHTML='';
-  PERSONS.forEach(p=>{
-    const b=document.createElement('div');b.className='psel-btn'+(p===selP?' active':'');
-    b.textContent=p+(p===ME?' ★':'');
-    b.onclick=()=>{selP=p;buildPersonSelector();buildExList();};
+
+// ── EXERCISES ────────────────────────────────
+let selP = null;
+
+async function buildExercises() {
+  const r = ROUTINE[todayDay]; if (!r || !r.exercises.length) return;
+  if (!selP) selP = ME;
+  document.getElementById('exSectionTitle').textContent = `Ejercicios · ${r.muscle}`;
+  buildPersonSelector();
+  await loadPesosParaPerson(selP);
+  buildExList();
+}
+
+async function loadPesosParaPerson(persona) {
+  if (cache.pesos[persona]) return; // ya cargado
+  try {
+    const data = await api({ action: 'getPesos', persona });
+    cache.pesos[persona] = data || [];
+  } catch(e) {
+    cache.pesos[persona] = [];
+  }
+}
+
+function getPesoHoy(persona, ejercicio) {
+  const rows = cache.pesos[persona] || [];
+  const row = rows.find(r => r.fecha === todayStr && r.ejercicio === ejercicio);
+  return row ? row.peso_kg : null;
+}
+
+function getPesoHistorial(persona, ejercicio) {
+  const rows = cache.pesos[persona] || [];
+  return rows.filter(r => r.ejercicio === ejercicio).sort((a,b) => b.fecha.localeCompare(a.fecha)).slice(0,4);
+}
+
+function buildPersonSelector() {
+  const el = document.getElementById('personSelector'); el.innerHTML = '';
+  PERSONS.forEach(p => {
+    const b = document.createElement('div'); b.className = 'psel-btn' + (p===selP?' active':'');
+    b.textContent = p + (p===ME?' ★':'');
+    b.onclick = async () => { selP=p; buildPersonSelector(); await loadPesosParaPerson(p); buildExList(); };
     el.appendChild(b);
   });
 }
-function buildExList(){
-  const r=ROUTINE[todayDay],list=document.getElementById('exList');
-  list.innerHTML='';const isMe=selP===ME;
-  r.exercises.forEach(ex=>{
-    const isRec=ex.type==='record';
-    const w=S.weights[todayStr]?.[selP]?.[ex.name];
-    const pr=S.records[selP]?.[ex.name];
-    const item=document.createElement('div');item.className='exitem'+(isRec?' record-type':'');
-    let tags='';
-    if(ex.note==='dropset')tags+=`<span class="ex-tag tag-drop">dropset</span>`;
-    if(ex.note==='smith')tags+=`<span class="ex-tag tag-smith">smith/multipower</span>`;
-    if(isRec)tags+=`<span class="ex-tag tag-rec">🏆 récord</span>`;
-    const right=isRec
-      ?`<div class="record-badge">🏆 ${pr?pr+' reps':'—'}</div><button class="weight-btn" ${!isMe?'disabled':''} onclick='openModal(${JSON.stringify(ex)})'>${isMe?'+ Marcar':'🔒'}</button>`
-      :`<button class="weight-btn ${w?'':'empty'}" ${!isMe?'disabled':''} onclick='openModal(${JSON.stringify(ex)})'>${w?w+' kg':isMe?'+ Peso':'—'}</button>`;
-    item.innerHTML=`<div><div class="ex-name">${ex.name}</div><div class="ex-series">${isRec?'Máx reps consecutivas':ex.series+'×'+ex.repsMin+'-'+ex.repsMax+' reps'}</div>${tags}</div><div class="ex-right">${right}</div>`;
+
+function buildExList() {
+  const r = ROUTINE[todayDay], list = document.getElementById('exList');
+  list.innerHTML = ''; const isMe = selP === ME;
+  r.exercises.forEach(ex => {
+    const isRec = ex.type === 'record';
+    const w = isRec ? null : getPesoHoy(selP, ex.name);
+    const pr = (cache.records || []).find(r => r.persona.toLowerCase()===selP.toLowerCase() && r.ejercicio===ex.name);
+    const item = document.createElement('div'); item.className = 'exitem' + (isRec?' record-type':'');
+    let tags = '';
+    if (ex.note==='dropset') tags += `<span class="ex-tag tag-drop">dropset</span>`;
+    if (ex.note==='smith') tags += `<span class="ex-tag tag-smith">smith/multipower</span>`;
+    if (isRec) tags += `<span class="ex-tag tag-rec">🏆 récord</span>`;
+    const right = isRec
+      ? `<div class="record-badge">🏆 ${pr?pr.valor+' reps':'—'}</div><button class="weight-btn" ${!isMe?'disabled':''} onclick='openModal(${JSON.stringify(ex)})'>${isMe?'+ Marcar':'🔒'}</button>`
+      : `<button class="weight-btn ${w?'':'empty'}" ${!isMe?'disabled':''} onclick='openModal(${JSON.stringify(ex)})'>${w?w+' kg':isMe?'+ Peso':'—'}</button>`;
+    item.innerHTML = `<div><div class="ex-name">${ex.name}</div><div class="ex-series">${isRec?'Máx reps consecutivas':ex.series+'×'+ex.repsMin+'-'+ex.repsMax+' reps'}</div>${tags}</div><div class="ex-right">${right}</div>`;
     list.appendChild(item);
   });
-  if(!isMe){
-    const n=document.createElement('div');
-    n.style.cssText='text-align:center;padding:10px;font-size:.72rem;color:var(--muted);margin-top:4px;';
-    n.textContent=`Viendo pesos de ${selP} · Solo podés editar los tuyos`;
+  if (!isMe) {
+    const n = document.createElement('div');
+    n.style.cssText = 'text-align:center;padding:10px;font-size:.72rem;color:var(--muted);margin-top:4px;';
+    n.textContent = `Viendo pesos de ${selP} · Solo podés editar los tuyos`;
     list.appendChild(n);
   }
 }
-let modalEx=null;
-function openModal(ex){
-  if(selP!==ME)return;modalEx=ex;
-  const isRec=ex.type==='record';
-  document.getElementById('modalExName').textContent=ex.name;
-  document.getElementById('modalExSeries').textContent=isRec?'Récord de repeticiones consecutivas':`${ex.series} series · ${ex.repsMin}-${ex.repsMax} reps`;
-  document.getElementById('weightUnit').textContent=isRec?'reps':'kg';
-  document.getElementById('weightInput').value=isRec?(S.records[ME]?.[ex.name]||''):(S.weights[todayStr]?.[ME]?.[ex.name]||'');
-  const hist=document.getElementById('modalHist');
-  if(isRec){hist.innerHTML='';}else{
-    const entries=[];
-    Object.entries(S.weights).forEach(([d,ps])=>{const w=ps?.[ME]?.[ex.name];if(w)entries.push({d,w});});
-    entries.sort((a,b)=>b.d.localeCompare(a.d));
-    const top=entries.slice(0,4);
-    hist.innerHTML=top.length?`<div class="mhist-title">Tu historial</div>`+top.map(e=>`<div class="hist-row"><span class="hist-date">${e.d}</span><span class="hist-w">${e.w} kg</span></div>`).join(''):'<div class="mhist-title" style="margin-bottom:0">Sin historial aún</div>';
+
+// ── MODAL ────────────────────────────────────
+let modalEx = null;
+function openModal(ex) {
+  if (selP !== ME) return; modalEx = ex;
+  const isRec = ex.type === 'record';
+  document.getElementById('modalExName').textContent = ex.name;
+  document.getElementById('modalExSeries').textContent = isRec ? 'Récord de repeticiones consecutivas' : `${ex.series} series · ${ex.repsMin}-${ex.repsMax} reps`;
+  document.getElementById('weightUnit').textContent = isRec ? 'reps' : 'kg';
+  document.getElementById('weightInput').value = isRec
+    ? ((cache.records||[]).find(r=>r.persona.toLowerCase()===ME.toLowerCase()&&r.ejercicio===ex.name)?.valor||'')
+    : (getPesoHoy(ME, ex.name) || '');
+  const hist = document.getElementById('modalHist');
+  if (isRec) { hist.innerHTML = ''; } else {
+    const entries = getPesoHistorial(ME, ex.name);
+    hist.innerHTML = entries.length
+      ? `<div class="mhist-title">Tu historial</div>` + entries.map(e=>`<div class="hist-row"><span class="hist-date">${e.fecha}</span><span class="hist-w">${e.peso_kg} kg</span></div>`).join('')
+      : '<div class="mhist-title" style="margin-bottom:0">Sin historial aún</div>';
   }
   document.getElementById('modalOverlay').classList.add('open');
 }
-function closeModal(){document.getElementById('modalOverlay').classList.remove('open');modalEx=null;}
-function saveWeight(){
-  const val=parseFloat(document.getElementById('weightInput').value);
-  if(!val||isNaN(val)){closeModal();return;}
-  if(modalEx.type==='record'){
-    if(!S.records[ME])S.records[ME]={};
-    if(val>(S.records[ME][modalEx.name]||0))S.records[ME][modalEx.name]=val;
-  }else{
-    if(!S.weights[todayStr])S.weights[todayStr]={};
-    if(!S.weights[todayStr][ME])S.weights[todayStr][ME]={};
-    S.weights[todayStr][ME][modalEx.name]=val;
+function closeModal() { document.getElementById('modalOverlay').classList.remove('open'); modalEx = null; }
+
+async function saveWeight() {
+  const val = parseFloat(document.getElementById('weightInput').value);
+  if (!val || isNaN(val)) { closeModal(); return; }
+  const isRec = modalEx.type === 'record';
+  closeModal();
+
+  try {
+    if (isRec) {
+      const res = await api({ action:'setRecord', persona:ME, ejercicio:modalEx.name, valor:val, fecha:todayStr });
+      if (res.nuevo_record) {
+        showToast('🏆 ¡Nuevo récord! ' + val + ' reps', 'ok');
+        cache.records = null; // invalidar cache
+        await loadRecords();
+      } else {
+        showToast('Récord actual: ' + res.valor + ' reps');
+      }
+    } else {
+      await api({ action:'setPeso', persona:ME, ejercicio:modalEx.name, peso_kg:val, fecha:todayStr, series:modalEx.series, reps_min:modalEx.repsMin, reps_max:modalEx.repsMax });
+      // Actualizar cache local
+      if (!cache.pesos[ME]) cache.pesos[ME] = [];
+      const idx = cache.pesos[ME].findIndex(r => r.fecha===todayStr && r.ejercicio===modalEx.name);
+      if (idx>=0) cache.pesos[ME][idx].peso_kg = val;
+      else cache.pesos[ME].push({ fecha:todayStr, persona:ME, ejercicio:modalEx.name, peso_kg:val });
+      showToast('💾 Guardado: ' + val + ' kg', 'ok');
+    }
+    buildExList();
+  } catch(e) {
+    showToast('Error al guardar', 'err');
   }
-  save();closeModal();buildExList();
 }
-document.getElementById('modalOverlay').addEventListener('click',e=>{if(e.target===document.getElementById('modalOverlay'))closeModal();});
-function buildRutinaPage(){
-  const el=document.getElementById('rutinaFull');el.innerHTML='';
-  GYM_DAYS.forEach(day=>{
-    const r=ROUTINE[day],b=document.createElement('div');
-    b.style.cssText='background:var(--card);border:1.5px solid var(--border);border-radius:14px;margin-bottom:12px;overflow:hidden;';
-    b.innerHTML=`<div style="padding:14px 16px;background:#16101a;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:10px"><span style="font-size:1.4rem">${r.emoji}</span><div><div style="font-size:.65rem;text-transform:uppercase;letter-spacing:1.5px;color:var(--red);font-weight:700">${day}</div><div style="font-size:1rem;font-weight:800;margin-top:1px">${r.muscle}</div></div></div><div style="padding:10px 16px 14px">${r.exercises.map(ex=>`<div style="display:flex;justify-content:space-between;padding:7px 0;border-bottom:1px solid var(--border);font-size:.82rem;align-items:center"><span>${ex.type==='record'?'🏆 ':''} ${ex.name}${ex.note?` <span style="font-size:.62rem;color:#7b8cde">(${ex.note})</span>`:''}</span><span style="color:var(--muted);font-size:.72rem;white-space:nowrap">${ex.type==='record'?'récord':ex.series+'×'+ex.repsMin+'-'+ex.repsMax}</span></div>`).join('')}</div>`;
+
+document.getElementById('modalOverlay').addEventListener('click', e => { if (e.target===document.getElementById('modalOverlay')) closeModal(); });
+
+// ── RECORDS ──────────────────────────────────
+async function loadRecords() {
+  try {
+    cache.records = await api({ action: 'getRecords' });
+  } catch(e) { cache.records = []; }
+}
+
+// ── RUTINA ───────────────────────────────────
+function buildRutinaPage() {
+  const el = document.getElementById('rutinaFull'); el.innerHTML = '';
+  GYM_DAYS.forEach(day => {
+    const r = ROUTINE[day], b = document.createElement('div');
+    b.style.cssText = 'background:var(--card);border:1.5px solid var(--border);border-radius:14px;margin-bottom:12px;overflow:hidden;';
+    b.innerHTML = `<div style="padding:14px 16px;background:#16101a;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:10px"><span style="font-size:1.4rem">${r.emoji}</span><div><div style="font-size:.65rem;text-transform:uppercase;letter-spacing:1.5px;color:var(--red);font-weight:700">${day}</div><div style="font-size:1rem;font-weight:800;margin-top:1px">${r.muscle}</div></div></div><div style="padding:10px 16px 14px">${r.exercises.map(ex=>`<div style="display:flex;justify-content:space-between;padding:7px 0;border-bottom:1px solid var(--border);font-size:.82rem;align-items:center"><span>${ex.type==='record'?'🏆 ':''} ${ex.name}${ex.note?` <span style="font-size:.62rem;color:#7b8cde">(${ex.note})</span>`:''}</span><span style="color:var(--muted);font-size:.72rem;white-space:nowrap">${ex.type==='record'?'récord':ex.series+'×'+ex.repsMin+'-'+ex.repsMax}</span></div>`).join('')}</div>`;
     el.appendChild(b);
   });
 }
-let histP=null;
-function buildHistPage(){
-  if(!histP)histP=ME;
-  const sel=document.getElementById('histPersonSelector');sel.innerHTML='';
-  PERSONS.forEach(p=>{
-    const b=document.createElement('div');b.className='psel-btn'+(p===histP?' active':'');
-    b.textContent=p+(p===ME?' ★':'');b.onclick=()=>{histP=p;buildHistPage();};sel.appendChild(b);
+
+// ── HISTORIAL ────────────────────────────────
+let histP = null;
+async function buildHistPage() {
+  if (!histP) histP = ME;
+  const sel = document.getElementById('histPersonSelector'); sel.innerHTML = '';
+  PERSONS.forEach(p => {
+    const b = document.createElement('div'); b.className = 'psel-btn' + (p===histP?' active':'');
+    b.textContent = p + (p===ME?' ★':'');
+    b.onclick = async () => { histP=p; await buildHistPage(); }; sel.appendChild(b);
   });
-  const content=document.getElementById('histContent');content.innerHTML='';
-  const allEx=[];GYM_DAYS.forEach(d=>ROUTINE[d].exercises.forEach(e=>allEx.push({...e,day:d})));
-  let found=false;
-  allEx.forEach(ex=>{
-    const isRec=ex.type==='record',pr=S.records[histP]?.[ex.name];
-    const entries=[];
-    if(!isRec){Object.entries(S.weights).forEach(([d,ps])=>{const w=ps?.[histP]?.[ex.name];if(w)entries.push({d,w});});entries.sort((a,b)=>b.d.localeCompare(a.d));}
-    if(!isRec&&!entries.length)return;if(isRec&&!pr)return;found=true;
-    const maxW=isRec?pr:Math.max(...entries.map(e=>e.w));
-    const b=document.createElement('div');b.className='hist-ex-block';
-    b.innerHTML=`<div class="hist-ex-header" onclick="this.nextElementSibling.classList.toggle('open')"><div><div class="hex-name">${ex.name}</div><div style="font-size:.68rem;color:var(--muted);margin-top:2px">${ex.day}</div></div><div class="hex-pr">${isRec?'🏆 '+maxW+' reps':'PR: '+maxW+' kg'}</div></div><div class="hist-ex-body">${isRec?`<div class="hist-ex-row"><span>Récord personal</span><span style="color:var(--red);font-weight:700">${pr} reps</span></div>`:entries.map(e=>`<div class="hist-ex-row"><span class="hist-date">${e.d}</span><span class="hist-w">${e.w} kg</span></div>`).join('')}</div>`;
+  const content = document.getElementById('histContent');
+  content.innerHTML = '<div class="loading"><span class="spin">⏳</span>Cargando...</div>';
+  await loadPesosParaPerson(histP);
+  if (!cache.records) await loadRecords();
+  content.innerHTML = '';
+  const allEx = []; GYM_DAYS.forEach(d => ROUTINE[d].exercises.forEach(e => allEx.push({...e, day:d})));
+  let found = false;
+  allEx.forEach(ex => {
+    const isRec = ex.type === 'record';
+    const pr = (cache.records||[]).find(r => r.persona.toLowerCase()===histP.toLowerCase() && r.ejercicio===ex.name);
+    const entries = isRec ? [] : getPesoHistorial(histP, ex.name);
+    if (!isRec && !entries.length) return;
+    if (isRec && !pr) return;
+    found = true;
+    const maxW = isRec ? pr.valor : Math.max(...entries.map(e=>e.peso_kg));
+    const b = document.createElement('div'); b.className = 'hist-ex-block';
+    b.innerHTML = `<div class="hist-ex-header" onclick="this.nextElementSibling.classList.toggle('open')"><div><div class="hex-name">${ex.name}</div><div style="font-size:.68rem;color:var(--muted);margin-top:2px">${ex.day}</div></div><div class="hex-pr">${isRec?'🏆 '+maxW+' reps':'PR: '+maxW+' kg'}</div></div><div class="hist-ex-body">${isRec?`<div class="hist-ex-row"><span>Récord personal</span><span style="color:var(--red);font-weight:700">${pr.valor} reps</span></div>`:entries.map(e=>`<div class="hist-ex-row"><span class="hist-date">${e.fecha}</span><span class="hist-w">${e.peso_kg} kg</span></div>`).join('')}</div>`;
     content.appendChild(b);
   });
-  if(!found)content.innerHTML=`<div style="text-align:center;padding:40px;color:var(--muted)"><div style="font-size:2rem;margin-bottom:8px">📭</div><div>Sin datos para ${histP} todavía.<br>¡Empezá a cargar pesos!</div></div>`;
+  if (!found) content.innerHTML = `<div style="text-align:center;padding:40px;color:var(--muted)"><div style="font-size:2rem;margin-bottom:8px">📭</div><div>Sin datos para ${histP} todavía.<br>¡Empezá a cargar pesos!</div></div>`;
 }
-function buildStatsPage(){
-  const allD=Object.keys(S.attendance);
-  let tot=0;allD.forEach(d=>Object.values(S.attendance[d]).forEach(v=>{if(v)tot++;}));
-  const avg=allD.length?(tot/allD.length).toFixed(1):0;
-  const cnt={};PERSONS.forEach(p=>{cnt[p]=allD.filter(d=>S.attendance[d]?.[p]===true).length;});
-  document.getElementById('statsGrid').innerHTML=`
-    <div class="stat-card"><div class="stat-n">${allD.length}</div><div class="stat-l">Días registrados</div></div>
-    <div class="stat-card"><div class="stat-n">${avg}</div><div class="stat-l">Promedio van</div></div>
-    <div class="stat-card"><div class="stat-n">${Math.max(0,...Object.values(cnt))}</div><div class="stat-l">Máx sesiones</div></div>`;
-  const as=document.getElementById('attendStats');as.innerHTML='';
-  [...PERSONS].sort((a,b)=>cnt[b]-cnt[a]).forEach(p=>{
-    const pct=allD.length?Math.round(cnt[p]/allD.length*100):0;
-    as.innerHTML+=`<div style="background:var(--card);border:1.5px solid var(--border);border-radius:12px;padding:12px 14px;margin-bottom:8px;display:flex;align-items:center;gap:12px">
-      <div style="width:36px;height:36px;border-radius:50%;background:#2a2a2a;display:flex;align-items:center;justify-content:center;font-weight:900;color:${COLORS[p]}">${PI[p]}</div>
-      <div style="flex:1"><div style="font-size:.85rem;font-weight:700">${p}${p===ME?' <span style="color:var(--red);font-size:.65rem">(vos)</span>':''}</div>
-        <div style="background:var(--border);border-radius:4px;height:5px;margin-top:6px"><div style="background:${COLORS[p]};border-radius:4px;height:5px;width:${pct}%"></div></div>
-      </div>
-      <div style="font-size:.9rem;font-weight:800;color:${COLORS[p]}">${cnt[p]} días</div>
-    </div>`;
-  });
-}
-function showPage(id){
-  ['restView','gymView','pageRutina','pageHistorial','pageStats'].forEach(p=>document.getElementById(p).classList.add('hidden'));
-  if(id==='hoy'){
-    if(isRest){document.getElementById('restView').classList.remove('hidden');buildRestDay();}
-    else{document.getElementById('gymView').classList.remove('hidden');buildWeekStrip();buildAttendance();buildExercises();}
-  }else{
-    document.getElementById(id).classList.remove('hidden');
-    if(id==='pageRutina')buildRutinaPage();
-    if(id==='pageHistorial')buildHistPage();
-    if(id==='pageStats')buildStatsPage();
+
+// ── STATS ────────────────────────────────────
+async function buildStatsPage() {
+  document.getElementById('statsGrid').innerHTML = '<div class="loading" style="grid-column:1/-1"><span class="spin">⏳</span></div>';
+  try {
+    const month = todayStr.slice(0,7);
+    const data = await api({ action:'getAsistenciaMes', mes:month });
+    const cnt = {}; PERSONS.forEach(p=>{cnt[p]=0;});
+    if (Array.isArray(data)) {
+      data.forEach(row => {
+        PERSONS.forEach(p=>{if(row[p.toLowerCase()]===1||row[p.toLowerCase()]==='1')cnt[p]++;});
+      });
+    }
+    const totalDays = Array.isArray(data) ? data.length : 0;
+    const tot = Object.values(cnt).reduce((a,b)=>a+b,0);
+    const avg = totalDays ? (tot/totalDays).toFixed(1) : 0;
+    document.getElementById('statsGrid').innerHTML = `
+      <div class="stat-card"><div class="stat-n">${totalDays}</div><div class="stat-l">Días este mes</div></div>
+      <div class="stat-card"><div class="stat-n">${avg}</div><div class="stat-l">Promedio van</div></div>
+      <div class="stat-card"><div class="stat-n">${Math.max(0,...Object.values(cnt))}</div><div class="stat-l">Máx sesiones</div></div>`;
+    const as = document.getElementById('attendStats'); as.innerHTML = '';
+    [...PERSONS].sort((a,b)=>cnt[b]-cnt[a]).forEach(p=>{
+      const pct = totalDays ? Math.round(cnt[p]/totalDays*100) : 0;
+      as.innerHTML += `<div style="background:var(--card);border:1.5px solid var(--border);border-radius:12px;padding:12px 14px;margin-bottom:8px;display:flex;align-items:center;gap:12px">
+        <div style="width:36px;height:36px;border-radius:50%;background:#2a2a2a;display:flex;align-items:center;justify-content:center;font-weight:900;color:${COLORS[p]}">${PI[p]}</div>
+        <div style="flex:1"><div style="font-size:.85rem;font-weight:700">${p}${p===ME?' <span style="color:var(--red);font-size:.65rem">(vos)</span>':''}</div>
+          <div style="background:var(--border);border-radius:4px;height:5px;margin-top:6px"><div style="background:${COLORS[p]};border-radius:4px;height:5px;width:${pct}%"></div></div>
+        </div>
+        <div style="font-size:.9rem;font-weight:800;color:${COLORS[p]}">${cnt[p]} días</div>
+      </div>`;
+    });
+  } catch(e) {
+    document.getElementById('statsGrid').innerHTML = '<div style="color:var(--muted);grid-column:1/-1;text-align:center;padding:20px">Error cargando stats</div>';
   }
 }
-function switchPage(el){
-  document.querySelectorAll('.nav-item').forEach(n=>n.classList.remove('active'));
-  el.classList.add('active');showPage(el.dataset.page);
+
+// ── NAV ──────────────────────────────────────
+function showPage(id) {
+  ['restView','gymView','pageRutina','pageHistorial','pageStats'].forEach(p=>document.getElementById(p).classList.add('hidden'));
+  if (id==='hoy') {
+    if (isRest) { document.getElementById('restView').classList.remove('hidden'); buildRestDay(); }
+    else { document.getElementById('gymView').classList.remove('hidden'); buildWeekStrip(); buildAttendance(); loadRecords().then(()=>buildExercises()); }
+  } else {
+    document.getElementById(id).classList.remove('hidden');
+    if (id==='pageRutina') buildRutinaPage();
+    if (id==='pageHistorial') buildHistPage();
+    if (id==='pageStats') buildStatsPage();
+  }
 }
+function switchPage(el) {
+  document.querySelectorAll('.nav-item').forEach(n=>n.classList.remove('active'));
+  el.classList.add('active'); showPage(el.dataset.page);
+}
+
+// ── START ────────────────────────────────────
 buildLogin();
-if(ME){
+if (ME) {
   document.getElementById('loginScreen').classList.add('hidden');
   document.getElementById('app').classList.remove('hidden');
   document.getElementById('navBar').classList.remove('hidden');
