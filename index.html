@@ -256,7 +256,7 @@ function buildLogin(){
   const g=document.getElementById('loginGrid');g.innerHTML='';
   PERSONS.forEach(p=>{
     const b=document.createElement('div');b.className='login-btn';
-    b.innerHTML=`<div class="lav" style="background:${COLORS[p]}22;color:${COLORS[p]}">${PI[p]}</div><div class="lnm">${p}</div><div class="lsub">Soy yo 👋</div>`;
+    b.innerHTML=`<div class="lav" style="background:${COLORS[p]}22;color:${COLORS[p]}">${PI[p]}</div><div class="lnm">${p}</div><div class="lsub"></div>`;
     b.onclick=()=>login(p);g.appendChild(b);
   });
 }
