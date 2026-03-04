@@ -658,6 +658,20 @@ async function buildHistPage(){
     group.appendChild(pills);
     groupsEl.appendChild(group);
   });
+// Grupo especial: Peso corporal
+  const bwData=getPesoHistorial(histP,'Peso corporal');
+  if(bwData.length>0){
+    const group=document.createElement('div');group.className='ex-group';
+    const label=document.createElement('div');label.className='ex-group-label';
+    label.innerHTML=`<span class="eg-emoji">⚖️</span>Peso corporal`;
+    group.appendChild(label);
+    const pills=document.createElement('div');pills.className='ex-group-pills';
+    const btn=document.createElement('button');
+    btn.className='ex-tab'+('Peso corporal'===histEx?' active':'');
+    btn.textContent='⚖️ Peso corporal';
+    btn.onclick=()=>{histEx='Peso corporal';document.querySelectorAll('.ex-tab').forEach(t=>t.classList.remove('active'));btn.classList.add('active');renderHistChart(histP,'Peso corporal');};
+    pills.appendChild(btn);group.appendChild(pills);groupsEl.appendChild(group);
+  }
 
   renderHistChart(histP,histEx);
 }
@@ -697,7 +711,7 @@ function renderHistChart(persona,ejercicio){
           <stop offset="100%" stop-color="${chartColor}" stop-opacity="0.02"/>
         </linearGradient></defs>
         ${yLabs.map(v=>`<line x1="${PL}" y1="${yS(v)+PT}" x2="${W-PR}" y2="${yS(v)+PT}" stroke="#1f1f1f" stroke-width="1"/><text x="${PL-4}" y="${yS(v)+PT+4}" text-anchor="end" font-size="8" fill="#444">${v.toFixed(0)}</text>`).join('')}
-        ${xLabs.map(d=>{const idx=data.findIndex(x=>x.fecha===d.fecha);return`<text x="${xS(idx)+PL}" y="${H-2}" text-anchor="middle" font-size="8" fill="#444">${d.fecha.slice(5)}</text>`}).join('')}
+        ${xLabs.map(d=>{const idx=data.findIndex(x=>x.fecha===d.fecha);return`<text x="${xS(idx)+PL}" y="${H-2}" text-anchor="middle" font-size="8" fill="#444">${fmtFecha(d.fecha)}</text>`}).join('')}
         <path d="${fill}" fill="url(#ag)"/>
         <path d="${line}" fill="none" stroke="${chartColor}" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>
         ${pts.map((p,i)=>`<circle cx="${p.x}" cy="${p.y}" r="${i===pts.length-1?4:3}" fill="${i===pts.length-1?chartColor:'#111'}" stroke="${chartColor}" stroke-width="1.5" class="dot" data-i="${i}" style="cursor:pointer"/>`).join('')}
@@ -737,7 +751,7 @@ function renderHistChart(persona,ejercicio){
         const d=data[idx],prev=data[idx+1];
         const delta=prev?(+(+d.peso_kg - +prev.peso_kg).toFixed(1)):null;
         const dh=delta!==null?`<div class="tt-delta" style="color:${delta>=0?'#2ecc71':'#e05555'}">${delta>=0?'+':''}${delta} kg vs anterior</div>`:'';
-        tip.innerHTML=`<div class="tt-date">${d.fecha}</div><div class="tt-weight">${d.peso_kg} kg</div>${dh}`;
+        tip.innerHTML=`<div class="tt-date">${fmtFecha(d.fecha)}</div><div class="tt-weight">${d.peso_kg} kg</div>${dh}`;
         const wr=wrap.getBoundingClientRect(),dr=dot.getBoundingClientRect();
         let l=dr.left-wr.left-40,t=dr.top-wr.top-62;
         if(l<0)l=0;if(l>wr.width-120)l=wr.width-120;
