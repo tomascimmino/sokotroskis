@@ -203,9 +203,10 @@ header{background:#0d0d0d;padding:8px 18px;border-bottom:1px solid var(--border)
 
 <div id="app" class="hidden">
   <header>
-    <div class="header-brand">
-     <img src="https://i.imgur.com/QtYQRSx.jpeg" style="height:52px;border-radius:6px;">
-    </div>
+   <div class="header-brand">
+  <img src="https://i.imgur.com/3VSDcxC.jpeg" style="height:28px;border-radius:50%;">
+  <span>SOKOTROSKIS</span>
+</div>
     <div class="user-chip" onclick="logout()">
       <div class="uc-av" id="ucAv"></div>
       <span class="uc-name" id="ucName"></span>
@@ -533,18 +534,19 @@ async function saveWeight(){
   const val=parseFloat(document.getElementById('weightInput').value);
   if(!val||isNaN(val)){closeModal();return;}
   const isRec=modalEx.type==='record';
+  const exCopy={...modalEx};
   closeModal();
   try{
     if(isRec){
-      const res=await api({action:'setRecord',persona:ME,ejercicio:modalEx.name,valor:val,fecha:todayStr});
+      const res=await api({action:'setRecord',persona:ME,ejercicio:exCopy.name,valor:val,fecha:todayStr});
       if(res.nuevo_record){showToast('🏆 ¡Nuevo récord! '+val+' reps','ok');cache.records=null;await loadRecords();}
       else showToast('Récord actual: '+res.valor+' reps');
     }else{
-      await api({action:'setPeso',persona:ME,ejercicio:modalEx.name,peso_kg:val,fecha:todayStr,series:3,reps_min:modalEx.repsMin,reps_max:modalEx.repsMax});
+      await api({action:'setPeso',persona:ME,ejercicio:exCopy.name,peso_kg:val,fecha:todayStr,series:3,reps_min:exCopy.repsMin,reps_max:exCopy.repsMax});
       if(!cache.pesos[ME])cache.pesos[ME]=[];
-      const idx=cache.pesos[ME].findIndex(r=>r.fecha===todayStr&&r.ejercicio===modalEx.name);
+      const idx=cache.pesos[ME].findIndex(r=>r.fecha===todayStr&&r.ejercicio===exCopy.name);
       if(idx>=0)cache.pesos[ME][idx].peso_kg=val;
-      else cache.pesos[ME].push({fecha:todayStr,persona:ME,ejercicio:modalEx.name,peso_kg:val});
+      else cache.pesos[ME].push({fecha:todayStr,persona:ME,ejercicio:exCopy.name,peso_kg:val});
       showToast('💾 Guardado: '+val+' kg','ok');
     }
     buildDayExList();
