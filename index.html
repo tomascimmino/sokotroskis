@@ -32,7 +32,7 @@ body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--text);max-w
 .login-btn:hover{border-color:var(--accent);background:#0e1a16;}
 
 /* ── HEADER ── */
-header{background:#0d0d0d;padding:14px 18px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;}
+header{background:#0d0d0d;padding:8px 18px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;}
 .header-brand{display:flex;align-items:center;gap:10px;}
 .header-brand span{font-size:1.1rem;font-weight:900;letter-spacing:3px;color:var(--accent);}
 .header-brand .logo{font-size:1.5rem;}
@@ -204,7 +204,7 @@ header{background:#0d0d0d;padding:14px 18px;border-bottom:1px solid var(--border
 <div id="app" class="hidden">
   <header>
     <div class="header-brand">
-     <img src="https://i.imgur.com/QtYQRSx.jpeg" style="height:70px;border-radius:6px;">
+     <img src="https://i.imgur.com/QtYQRSx.jpeg" style="height:52px;border-radius:6px;">
     </div>
     <div class="user-chip" onclick="logout()">
       <div class="uc-av" id="ucAv"></div>
@@ -307,7 +307,7 @@ let ME=localStorage.getItem('sokoUser')||null;
 let selP=ME;
 const today=new Date();
 const todayDay=DAY_NAMES[today.getDay()];
-const todayStr=today.toISOString().split('T')[0];
+const todayStr=today.toLocaleDateString('en-CA');
 const isRest=!ROUTINE[todayDay]||ROUTINE[todayDay].exercises.length===0;
 
 async function api(params){
