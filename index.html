@@ -523,7 +523,8 @@ function openModal(ex){
   modalEx=ex;
   const isRec=ex.type==='record';
   document.getElementById('modalExName').textContent=ex.name;
-  document.getElementById('modalExSeries').textContent=isRec?'Récord de repeticiones — lo que te dé 😤':`${ex.repsMin}-${ex.repsMax} reps`;
+  const isBW=ex.type==='body_weight';
+  document.getElementById('modalExSeries').textContent=isRec?'Récord de repeticiones — lo que te dé 😤':isBW?'Tu peso corporal de hoy':`${ex.repsMin}-${ex.repsMax} reps`;
   document.getElementById('weightUnit').textContent=isRec?'reps':'kg';
   document.getElementById('weightInput').value=isRec?((cache.records||[]).find(r=>r.persona.toLowerCase()===ME.toLowerCase()&&r.ejercicio===ex.name)?.valor||''):(getPesoHoy(ME,ex.name)||'');
   const hist=document.getElementById('modalHist');
@@ -659,6 +660,32 @@ async function buildHistPage(){
     group.appendChild(pills);
     groupsEl.appendChild(group);
   });
+
+  // Grupo especial: Peso corporal
+  const bwData=getPesoHistorial(histP,'Peso corporal');
+  if(bwData.length>0){
+    const group=document.createElement('div');
+    group.className='ex-group';
+    const label=document.createElement('div');
+    label.className='ex-group-label';
+    label.innerHTML=`<span class="eg-emoji">⚖️</span>Peso corporal`;
+    group.appendChild(label);
+    const pills=document.createElement('div');
+    pills.className='ex-group-pills';
+    const btn=document.createElement('button');
+    btn.className='ex-tab'+('Peso corporal'===histEx?' active':'');
+    btn.textContent='⚖️ Peso corporal';
+    btn.onclick=()=>{
+      histEx='Peso corporal';
+      document.querySelectorAll('.ex-tab').forEach(t=>t.classList.remove('active'));
+      btn.classList.add('active');
+      renderHistChart(histP,'Peso corporal');
+    };
+    pills.appendChild(btn);
+    group.appendChild(pills);
+    groupsEl.appendChild(group);
+    if(!histEx)histEx='Peso corporal';
+  }
 
   renderHistChart(histP,histEx);
 }
@@ -806,8 +833,25 @@ async function buildStatsPage(){
 function showPage(id){
   ['restView','gymView','pageRutina','pageHistorial','pageStats'].forEach(p=>document.getElementById(p).classList.add('hidden'));
   if(id==='hoy'){
-    if(isRest){document.getElementById('restView').classList.remove('hidden');buildRestDay();}
-    else{document.getElementById('gymView').classList.remove('hidden');buildWeekStrip();buildAttendance();buildDayExList();buildBodyWeightCard('bodyWeightCard');}
+    if(isRest){
+      document.getElementById('restView').classList.remove('hidden');
+      buildRestDay();
+    }else{
+      document.getElementById('gymView').classList.remove('hidden');
+      buildWeekStrip();
+      // Disparar todo en paralelo
+      setSyncStatus('syncing');
+      Promise.all([
+        api({action:'getAsistencia',fecha:todayStr}).then(d=>{cache.asistencia=d;}).catch(()=>{}),
+        cache.pesos[ME]?Promise.resolve():api({action:'getPesos',persona:ME}).then(d=>{cache.pesos[ME]=d||[];}).catch(()=>{cache.pesos[ME]=[];}),
+        cache.records&&cache.records.length?Promise.resolve():api({action:'getRecords'}).then(d=>{cache.records=d||[];}).catch(()=>{cache.records=[];})
+      ]).then(()=>{
+        setSyncStatus('ok');
+        renderAttendance();
+        buildDayExList();
+        buildBodyWeightCard('bodyWeightCard');
+      }).catch(()=>setSyncStatus('error'));
+    }
   }else{
     document.getElementById(id).classList.remove('hidden');
     if(id==='pageRutina')buildRutinaPage();
