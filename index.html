@@ -166,11 +166,18 @@ header{background:#0d0d0d;padding:8px 18px;border-bottom:1px solid var(--border)
 .rut-day-block.open .rut-day-body{display:block;}
 .rut-ex-row{display:flex;justify-content:space-between;padding:7px 0;border-bottom:1px solid var(--border);font-size:.8rem;align-items:center;}
 .rut-ex-row:last-child{border:none;}
-/* ── CHART ── */
-.ex-tabs{display:flex;gap:6px;overflow-x:auto;padding-bottom:4px;margin-bottom:16px;scrollbar-width:none;}
-.ex-tabs::-webkit-scrollbar{display:none;}
-.ex-tab{background:var(--card);border:1.5px solid var(--border);border-radius:20px;padding:5px 14px;font-size:.68rem;font-weight:700;cursor:pointer;color:var(--muted);white-space:nowrap;transition:all .15s;font-family:'Inter',sans-serif;}
+
+/* ── HISTORIAL — GRUPOS DE EJERCICIOS ── */
+.ex-groups-wrap{margin-bottom:14px;}
+.ex-group{margin-bottom:10px;}
+.ex-group-label{display:flex;align-items:center;gap:6px;font-size:.55rem;letter-spacing:1.5px;text-transform:uppercase;color:var(--muted);font-weight:700;margin-bottom:7px;padding-bottom:5px;border-bottom:1px solid var(--border);}
+.ex-group-label .eg-emoji{font-size:.85rem;}
+.ex-group-pills{display:flex;flex-wrap:wrap;gap:6px;}
+.ex-tab{background:var(--card);border:1.5px solid var(--border);border-radius:20px;padding:5px 12px;font-size:.63rem;font-weight:700;cursor:pointer;color:var(--muted);white-space:nowrap;transition:all .15s;font-family:'Inter',sans-serif;line-height:1.3;}
 .ex-tab.active{background:#0c1a14;border-color:var(--accent);color:var(--accent);}
+.ex-tab:hover:not(.active){border-color:#333;color:var(--text);}
+
+/* ── CHART ── */
 .chart-card{background:var(--card);border:1px solid var(--border);border-radius:18px;padding:20px 16px;margin-bottom:12px;}
 .chart-header{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:20px;}
 .chart-ex-name{font-size:.95rem;font-weight:800;}
@@ -244,7 +251,7 @@ svg.linechart{width:100%;overflow:visible;}
     <div class="page-inner">
       <div class="section-title">Progresión de pesos</div>
       <div class="person-selector" id="histPersonSelector"></div>
-      <div class="ex-tabs" id="histExTabs"></div>
+      <div class="ex-groups-wrap" id="histExGroups"></div>
       <div id="histChartArea"></div>
     </div>
   </div>
@@ -574,9 +581,11 @@ function buildRutinaPage(){
 }
 function toggleRutDay(i){document.getElementById(`rutday-${i}`).classList.toggle('open');}
 
-/* ── HISTORIAL CON GRÁFICO ── */
+/* ── HISTORIAL CON GRÁFICO AGRUPADO ── */
 async function buildHistPage(){
   if(!histP)histP=ME;
+
+  // Selector de persona
   const sel=document.getElementById('histPersonSelector');sel.innerHTML='';
   PERSONS.forEach(p=>{
     const b=document.createElement('div');b.className='psel-btn'+(p===histP?' active':'');
@@ -584,36 +593,77 @@ async function buildHistPage(){
     b.onclick=async()=>{histP=p;cache.pesos[p]=null;histEx=null;await buildHistPage();};
     sel.appendChild(b);
   });
+
   document.getElementById('histChartArea').innerHTML='<div class="loading"><span class="spin">⏳</span>Cargando...</div>';
+
   await loadPesosParaPerson(histP);
   if(!cache.records)await loadRecords();
-  const withData=ALL_EXERCISES.filter(ex=>{
+
+  // Construir grupos con datos
+  const groupsEl=document.getElementById('histExGroups');groupsEl.innerHTML='';
+
+  // Función auxiliar para saber si un ejercicio tiene datos
+  const hasData=ex=>{
     if(ex.type==='record')return(cache.records||[]).some(r=>r.persona.toLowerCase()===histP.toLowerCase()&&r.ejercicio===ex.name);
     return getPesoHistorial(histP,ex.name).length>0;
-  });
-  if(!histEx||!withData.find(e=>e.name===histEx))histEx=withData.length?withData[0].name:null;
-  const tabs=document.getElementById('histExTabs');tabs.innerHTML='';
-  if(withData.length===0){
+  };
+
+  // Todos los ejercicios con datos para esta persona
+  const allWithData=ALL_EXERCISES.filter(hasData);
+  if(!histEx||!allWithData.find(e=>e.name===histEx))histEx=allWithData.length?allWithData[0].name:null;
+
+  if(allWithData.length===0){
+    groupsEl.innerHTML='';
     document.getElementById('histChartArea').innerHTML=`<div class="chart-empty"><div style="font-size:2rem;margin-bottom:8px">📭</div>Sin datos para ${histP} todavía.<br>¡Empezá a cargar pesos!</div>`;
     return;
   }
-  withData.forEach(ex=>{
-    const b=document.createElement('div');b.className='ex-tab'+(ex.name===histEx?' active':'');
-    b.textContent=ex.name;
-    b.onclick=()=>{histEx=ex.name;tabs.querySelectorAll('.ex-tab').forEach((t,i)=>t.className='ex-tab'+(withData[i].name===histEx?' active':''));renderHistChart(histP,histEx);};
-    tabs.appendChild(b);
+
+  // Renderizar grupos por día de gym
+  GYM_DAYS.forEach(day=>{
+    const r=ROUTINE[day];
+    const dayExWithData=r.exercises.filter(hasData);
+    if(!dayExWithData.length)return;
+
+    const group=document.createElement('div');
+    group.className='ex-group';
+
+    const label=document.createElement('div');
+    label.className='ex-group-label';
+    label.innerHTML=`<span class="eg-emoji">${r.emoji}</span>${r.muscle}`;
+    group.appendChild(label);
+
+    const pills=document.createElement('div');
+    pills.className='ex-group-pills';
+
+    dayExWithData.forEach(ex=>{
+      const btn=document.createElement('button');
+      btn.className='ex-tab'+(ex.name===histEx?' active':'');
+      btn.textContent=(ex.type==='record'?'🏆 ':'')+ex.name;
+      btn.onclick=()=>{
+        histEx=ex.name;
+        document.querySelectorAll('.ex-tab').forEach(t=>t.classList.remove('active'));
+        btn.classList.add('active');
+        renderHistChart(histP,histEx);
+      };
+      pills.appendChild(btn);
+    });
+
+    group.appendChild(pills);
+    groupsEl.appendChild(group);
   });
+
   renderHistChart(histP,histEx);
 }
 
 function renderHistChart(persona,ejercicio){
   const area=document.getElementById('histChartArea');
-  const color=COLORS[persona];
+  const personColor=COLORS[persona];
+  const chartColor='#00c896'; // siempre verde fluor para la línea
   const exObj=ALL_EXERCISES.find(e=>e.name===ejercicio);
   const isRec=exObj&&exObj.type==='record';
   if(isRec){
     const pr=(cache.records||[]).find(r=>r.persona.toLowerCase()===persona.toLowerCase()&&r.ejercicio===ejercicio);
-    area.innerHTML=`<div class="chart-card"><div class="chart-header"><div><div class="chart-ex-name">🏆 ${ejercicio}</div><div class="chart-ex-sub" style="color:${color}">${persona}</div></div><div class="chart-pr"><span class="chart-pr-label">Récord</span>${pr?pr.valor+' reps':'—'}</div></div><div class="chart-empty" style="padding:20px 0">Récord personal: <strong style="color:${color}">${pr?pr.valor+' reps':'Sin datos'}</strong></div></div>`;
+    area.innerHTML=`<div class="chart-card"><div class="chart-header"><div><div class="chart-ex-name">🏆 ${ejercicio}</div><div class="chart-ex-sub" style="color:${personColor}">${persona}</div></div><div class="chart-pr"><span class="chart-pr-label">Récord</span>${pr?pr.valor+' reps':'—'}</div></div><div class="chart-empty" style="padding:20px 0">Récord personal: <strong style="color:${chartColor}">${pr?pr.valor+' reps':'Sin datos'}</strong></div></div>`;
     return;
   }
   const data=getPesoHistorial(persona,ejercicio).slice().reverse();
@@ -636,15 +686,15 @@ function renderHistChart(persona,ejercicio){
     chartHtml=`<div class="chart-wrap" id="chartWrap">
       <svg class="linechart" viewBox="0 0 ${W} ${H}" id="chartSvg">
         <defs><linearGradient id="ag" x1="0" y1="0" x2="0" y2="1">
-          <stop offset="0%" stop-color="${color}" stop-opacity="0.25"/>
-          <stop offset="100%" stop-color="${color}" stop-opacity="0.02"/>
+          <stop offset="0%" stop-color="${chartColor}" stop-opacity="0.25"/>
+          <stop offset="100%" stop-color="${chartColor}" stop-opacity="0.02"/>
         </linearGradient></defs>
         ${yLabs.map(v=>`<line x1="${PL}" y1="${yS(v)+PT}" x2="${W-PR}" y2="${yS(v)+PT}" stroke="#1f1f1f" stroke-width="1"/><text x="${PL-4}" y="${yS(v)+PT+4}" text-anchor="end" font-size="8" fill="#444">${v.toFixed(0)}</text>`).join('')}
         ${xLabs.map(d=>{const idx=data.findIndex(x=>x.fecha===d.fecha);return`<text x="${xS(idx)+PL}" y="${H-2}" text-anchor="middle" font-size="8" fill="#444">${d.fecha.slice(5)}</text>`}).join('')}
         <path d="${fill}" fill="url(#ag)"/>
-        <path d="${line}" fill="none" stroke="${color}" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>
-        ${pts.map((p,i)=>`<circle cx="${p.x}" cy="${p.y}" r="${i===pts.length-1?4:3}" fill="${i===pts.length-1?color:'#111'}" stroke="${color}" stroke-width="1.5" class="dot" data-i="${i}" style="cursor:pointer"/>`).join('')}
-        ${(()=>{const pi=data.findIndex(d=>+d.peso_kg===pr);const pp=pts[pi];return`<circle cx="${pp.x}" cy="${pp.y}" r="6" fill="none" stroke="${color}" stroke-width="1" opacity="0.4"/>`;})()}
+        <path d="${line}" fill="none" stroke="${chartColor}" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>
+        ${pts.map((p,i)=>`<circle cx="${p.x}" cy="${p.y}" r="${i===pts.length-1?4:3}" fill="${i===pts.length-1?chartColor:'#111'}" stroke="${chartColor}" stroke-width="1.5" class="dot" data-i="${i}" style="cursor:pointer"/>`).join('')}
+        ${(()=>{const pi=data.findIndex(d=>+d.peso_kg===pr);const pp=pts[pi];return`<circle cx="${pp.x}" cy="${pp.y}" r="6" fill="none" stroke="${chartColor}" stroke-width="1" opacity="0.4"/>`;})()}
       </svg>
       <div class="chart-tooltip" id="chartTip"></div>
     </div>`;
@@ -653,7 +703,7 @@ function renderHistChart(persona,ejercicio){
   }
   area.innerHTML=`<div class="chart-card">
     <div class="chart-header">
-      <div><div class="chart-ex-name">${ejercicio}</div><div class="chart-ex-sub" style="color:${color}">${persona}</div></div>
+      <div><div class="chart-ex-name">${ejercicio}</div><div class="chart-ex-sub" style="color:${personColor}">${persona}</div></div>
       <div class="chart-pr"><span class="chart-pr-label">Récord</span>${pr} kg</div>
     </div>
     ${chartHtml}
