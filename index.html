@@ -227,7 +227,7 @@ svg.linechart{width:100%;overflow:visible;}
     </div>
   </header>
   <div class="day-banner" id="dayBanner"></div>
-  <div id="restView" class="hidden"></div>
+  <div id="restView" class="hidden"><div id="bodyWeightCardRest" style="padding:0 16px 16px"></div></div>
   <div id="gymView" class="hidden">
     <div class="section" style="padding:16px 16px 0">
       <div class="section-title">Esta semana</div>
@@ -413,8 +413,7 @@ async function buildRestDay(){
       <div class="streak-item"><div class="streak-n">${cnt[ME]}</div><div class="streak-l">Sesiones</div></div>
       <div class="streak-item"><div class="streak-n">${Math.round(cnt[ME]/totalDays*100)}%</div><div class="streak-l">Asistencia</div></div>
       <div class="streak-item"><div class="streak-n">${[...PERSONS].sort((a,b)=>cnt[b]-cnt[a]).indexOf(ME)+1}°</div><div class="streak-l">Ranking</div></div>
-</div></div>
-    <div id="bodyWeightCardRest" style="margin-top:2px"></div>`;
+    </div></div>`;
   setTimeout(()=>buildBodyWeightCard('bodyWeightCardRest'),100);
 }
 function buildWeekStrip(){
@@ -518,7 +517,7 @@ function getPesoHistorial(persona,ejercicio){
   const rows=cache.pesos[persona]||[];
   return rows.filter(r=>r.ejercicio===ejercicio).sort((a,b)=>b.fecha.localeCompare(a.fecha)).slice(0,30);
 }
-let modalEx=null;
+function fmtFecha(f){   try{const d=new Date(f.length<=10?f+'T12:00:00':f);return d.toLocaleDateString('es-AR',{day:'numeric',month:'short'});}catch(e){return f.slice(5)||f;} }  let modalEx=null;
 function openModal(ex){
   modalEx=ex;
   const isRec=ex.type==='record';
@@ -807,7 +806,17 @@ function showPage(id){
   ['restView','gymView','pageRutina','pageHistorial','pageStats'].forEach(p=>document.getElementById(p).classList.add('hidden'));
   if(id==='hoy'){
     if(isRest){document.getElementById('restView').classList.remove('hidden');buildRestDay();}
-    else{document.getElementById('gymView').classList.remove('hidden');buildWeekStrip();buildAttendance();buildDayExList();buildBodyWeightCard('bodyWeightCard');}
+    else{
+      document.getElementById('gymView').classList.remove('hidden');
+      buildWeekStrip();
+      setSyncStatus('syncing');
+      api({action:'getAsistencia',fecha:todayStr})
+        .then(d=>{cache.asistencia=d;}).catch(()=>{})
+        .finally(()=>renderAttendance());
+      const p1=cache.pesos[ME]?Promise.resolve():api({action:'getPesos',persona:ME}).then(d=>{cache.pesos[ME]=d||[];}).catch(()=>{cache.pesos[ME]=[];});
+      const p2=cache.records&&cache.records.length?Promise.resolve():api({action:'getRecords'}).then(d=>{cache.records=d||[];}).catch(()=>{cache.records=[];});
+      Promise.all([p1,p2]).then(()=>{setSyncStatus('ok');buildDayExList();buildBodyWeightCard('bodyWeightCard');}).catch(()=>setSyncStatus('error'));
+    }
   }else{
     document.getElementById(id).classList.remove('hidden');
     if(id==='pageRutina')buildRutinaPage();
