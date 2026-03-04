@@ -16,7 +16,7 @@ body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--text);max-w
 
 /* ── LOGIN ── */
 #loginScreen{position:fixed;inset:0;background:var(--bg);z-index:200;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:32px 24px;}
-.login-logo{font-size:2.8rem;margin-bottom:10px;filter:grayscale(0);}
+.login-logo{font-size:2.8rem;margin-bottom:10px;}
 .login-title{font-size:1.9rem;font-weight:900;letter-spacing:4px;color:var(--accent);margin-bottom:4px;}
 .login-sub{font-size:0.75rem;color:var(--muted);letter-spacing:1.5px;text-transform:uppercase;margin-bottom:40px;}
 .login-label{font-size:0.65rem;letter-spacing:2px;text-transform:uppercase;color:var(--muted);font-weight:700;margin-bottom:12px;align-self:flex-start;width:100%;max-width:340px;}
@@ -103,24 +103,32 @@ header{background:#0d0d0d;padding:14px 18px;border-bottom:1px solid var(--border
 .attend-btn.going-active{border-color:var(--green);background:#0b1a13;color:#2ecc71;}
 .attend-btn.nope-active{border-color:var(--red);background:#1a0e0e;color:var(--red);}
 
+/* ── EX LIST (hoy) ── */
+.day-exercises{margin-top:4px;}
+.ex-accordion{background:var(--card);border:1.5px solid var(--border);border-radius:14px;margin-bottom:8px;overflow:hidden;}
+.ex-accordion-header{padding:14px 16px;display:flex;align-items:center;justify-content:space-between;cursor:pointer;user-select:none;}
+.ex-accordion-header:active{background:#161616;}
+.ex-acc-left{display:flex;align-items:center;gap:10px;}
+.ex-acc-name{font-size:.9rem;font-weight:700;}
+.ex-acc-reps{font-size:.65rem;color:var(--muted);margin-top:2px;}
+.ex-acc-weight{font-size:.78rem;font-weight:700;color:var(--accent);margin-right:8px;}
+.ex-acc-weight.empty{color:var(--muted);}
+.ex-acc-arrow{font-size:.7rem;color:var(--muted);transition:transform .2s;}
+.ex-accordion.open .ex-acc-arrow{transform:rotate(180deg);}
+.ex-accordion-body{padding:0 16px 14px;display:none;border-top:1px solid var(--border);}
+.ex-accordion.open .ex-accordion-body{display:block;}
+.ex-body-row{display:flex;align-items:center;justify-content:space-between;padding:10px 0;border-bottom:1px solid var(--border);}
+.ex-body-row:last-child{border:none;}
+.ex-hist-mini{font-size:.7rem;color:var(--muted);}
+.ex-hist-mini span{color:var(--text);font-weight:600;}
+.weight-btn{background:var(--accent);color:#000;border:none;border-radius:8px;padding:7px 14px;font-size:.78rem;font-weight:800;cursor:pointer;font-family:'Inter',sans-serif;}
+.weight-btn.empty{background:var(--card2);border:1.5px dashed var(--border);color:var(--muted);}
+.weight-btn:disabled{opacity:.3;cursor:default;}
+
 /* ── PERSON SELECTOR ── */
 .person-selector{display:flex;gap:6px;margin-bottom:14px;flex-wrap:wrap;}
 .psel-btn{background:var(--card);border:1.5px solid var(--border);border-radius:8px;padding:5px 12px;font-size:.7rem;font-weight:700;cursor:pointer;color:var(--muted);transition:all .15s;font-family:'Inter',sans-serif;}
 .psel-btn.active{background:#0c1a14;border-color:var(--accent);color:var(--accent);}
-
-/* ── EX LIST ── */
-.exlist{display:flex;flex-direction:column;gap:8px;}
-.exitem{background:var(--card);border:1.5px solid var(--border);border-radius:12px;padding:12px 14px;display:flex;justify-content:space-between;align-items:flex-start;gap:10px;}
-.exitem.record-type{border-color:#b8860b;}
-.ex-name{font-size:.88rem;font-weight:700;}
-.ex-series{font-size:.7rem;color:var(--muted);margin-top:3px;}
-.ex-tag{display:inline-block;font-size:.58rem;font-weight:700;text-transform:uppercase;letter-spacing:.5px;padding:2px 6px;border-radius:4px;margin-top:4px;}
-.tag-drop{background:#13132a;color:#7b8cde;} .tag-smith{background:#122018;color:#5dbf6e;} .tag-rec{background:#1a1500;color:#c8a020;}
-.ex-right{display:flex;flex-direction:column;align-items:flex-end;gap:4px;min-width:68px;}
-.weight-btn{background:var(--accent);color:#000;border:none;border-radius:8px;padding:6px 10px;font-size:.78rem;font-weight:800;cursor:pointer;width:100%;text-align:center;font-family:'Inter',sans-serif;}
-.weight-btn.empty{background:var(--card2);border:1px dashed var(--border);color:var(--muted);}
-.weight-btn:disabled{opacity:.3;cursor:default;}
-.record-badge{background:#c8a020;color:#000;border-radius:6px;padding:3px 7px;font-size:.62rem;font-weight:800;}
 
 /* ── MODAL ── */
 .modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,.88);z-index:100;display:flex;align-items:flex-end;justify-content:center;opacity:0;pointer-events:none;transition:opacity .2s;}
@@ -168,6 +176,17 @@ header{background:#0d0d0d;padding:14px 18px;border-bottom:1px solid var(--border
 @keyframes spin{to{transform:rotate(360deg);}}
 .toast{position:fixed;bottom:80px;left:50%;transform:translateX(-50%);background:#161616;border:1px solid var(--border);border-radius:10px;padding:10px 18px;font-size:.78rem;font-weight:700;z-index:300;opacity:0;transition:opacity .3s;pointer-events:none;white-space:nowrap;}
 .toast.show{opacity:1;} .toast.ok{border-color:var(--green);color:var(--green);} .toast.err{border-color:var(--red);color:var(--red);}
+
+/* ── RUTINA PAGE ── */
+.rut-day-block{background:var(--card);border:1px solid var(--border);border-radius:14px;margin-bottom:10px;overflow:hidden;}
+.rut-day-header{padding:13px 16px;background:#0d0d0d;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;cursor:pointer;user-select:none;}
+.rut-day-left{display:flex;align-items:center;gap:10px;}
+.rut-day-arrow{font-size:.7rem;color:var(--muted);transition:transform .2s;}
+.rut-day-block.open .rut-day-arrow{transform:rotate(180deg);}
+.rut-day-body{padding:10px 16px 14px;display:none;}
+.rut-day-block.open .rut-day-body{display:block;}
+.rut-ex-row{display:flex;justify-content:space-between;padding:7px 0;border-bottom:1px solid var(--border);font-size:.8rem;align-items:center;}
+.rut-ex-row:last-child{border:none;}
 </style>
 </head>
 <body>
@@ -203,6 +222,10 @@ header{background:#0d0d0d;padding:14px 18px;border-bottom:1px solid var(--border
         <div id="myAttend"></div>
         <div class="section-title" style="margin-top:4px">El grupo</div>
         <div class="attend-grid" id="attendGrid"></div>
+      </div>
+      <div class="section">
+        <div class="section-title">Ejercicios de hoy</div>
+        <div class="day-exercises" id="dayExList"></div>
       </div>
     </div>
   </div>
@@ -241,35 +264,35 @@ const PI = {Fede:'F',Toti:'T',Matu:'M',Pepo:'P',Jordan:'J'};
 const COLORS = {Fede:'#00c896',Toti:'#5b9cf6',Matu:'#a78bfa',Pepo:'#f59e0b',Jordan:'#f472b6'};
 const ROUTINE = {
   Lunes:{emoji:'🦵',muscle:'Piernas',exercises:[
-    {name:'Extensión de cuádricep',series:3,repsMin:12,repsMax:15,note:'dropset'},
-    {name:'Sentadilla Hack',series:3,repsMin:8,repsMax:12},
-    {name:'Prensa',series:3,repsMin:8,repsMax:12},
-    {name:'Sillón femoral',series:3,repsMin:8,repsMax:12},
-    {name:'Gemelos',series:3,repsMin:15,repsMax:20,note:'dropset'},
+    {name:'Extensión de cuádricep',repsMin:12,repsMax:15},
+    {name:'Sentadilla Hack',repsMin:8,repsMax:12},
+    {name:'Prensa',repsMin:8,repsMax:12},
+    {name:'Sillón femoral',repsMin:8,repsMax:12},
+    {name:'Gemelos',repsMin:15,repsMax:20},
   ]},
   Martes:{emoji:'😴',muscle:'Descanso',exercises:[]},
   Miercoles:{emoji:'💪',muscle:'Pecho & Bícep',exercises:[
-    {name:'Press inclinado',series:3,repsMin:8,repsMax:12,note:'smith'},
-    {name:'Press banca',series:3,repsMin:8,repsMax:12,note:'smith'},
-    {name:'Peck deck',series:3,repsMin:8,repsMax:12},
-    {name:'Curl con mancuernas',series:3,repsMin:8,repsMax:12},
-    {name:'Curl martillo',series:3,repsMin:8,repsMax:12},
-    {name:'Curl inclinado / concentrado',series:3,repsMin:8,repsMax:12},
+    {name:'Press inclinado',repsMin:8,repsMax:12},
+    {name:'Press banca',repsMin:8,repsMax:12},
+    {name:'Peck deck',repsMin:8,repsMax:12},
+    {name:'Curl con mancuernas',repsMin:8,repsMax:12},
+    {name:'Curl martillo',repsMin:8,repsMax:12},
+    {name:'Curl inclinado / concentrado',repsMin:8,repsMax:12},
   ]},
   Jueves:{emoji:'🔙',muscle:'Espalda & Trícep',exercises:[
-    {name:'Jalón al pecho (polea)',series:3,repsMin:8,repsMax:12},
-    {name:'Remo con polea',series:3,repsMin:8,repsMax:12},
-    {name:'Remo en T',series:3,repsMin:8,repsMax:12},
+    {name:'Jalón al pecho (polea)',repsMin:8,repsMax:12},
+    {name:'Remo con polea',repsMin:8,repsMax:12},
+    {name:'Remo en T',repsMin:8,repsMax:12},
     {name:'Dominadas',type:'record'},
-    {name:'Extensión trícep polea ↓',series:3,repsMin:8,repsMax:12},
-    {name:'Extensión trícep polea ↑',series:3,repsMin:8,repsMax:12},
-    {name:'Trícep tras nuca (mancuerna)',series:3,repsMin:8,repsMax:12},
+    {name:'Extensión trícep polea ↓',repsMin:8,repsMax:12},
+    {name:'Extensión trícep polea ↑',repsMin:8,repsMax:12},
+    {name:'Trícep tras nuca (mancuerna)',repsMin:8,repsMax:12},
   ]},
   Viernes:{emoji:'🔝',muscle:'Hombro',exercises:[
-    {name:'Press militar',series:3,repsMin:8,repsMax:12},
-    {name:'Elevaciones laterales',series:3,repsMin:8,repsMax:12},
-    {name:'Elevaciones frontales',series:3,repsMin:8,repsMax:12},
-    {name:'Peck deck invertido',series:3,repsMin:8,repsMax:12},
+    {name:'Press militar',repsMin:8,repsMax:12},
+    {name:'Elevaciones laterales',repsMin:8,repsMax:12},
+    {name:'Elevaciones frontales',repsMin:8,repsMax:12},
+    {name:'Peck deck invertido',repsMin:8,repsMax:12},
   ]},
   Sabado:{emoji:'😴',muscle:'Descanso',exercises:[]},
   Domingo:{emoji:'😴',muscle:'Descanso',exercises:[]},
@@ -401,17 +424,11 @@ function renderAttendance(){
   const d=cache.asistencia||{};
   const val=d[ME.toLowerCase()];
   const v=val===1||val==='1'?true:val===0||val==='0'?false:null;
-
   document.getElementById('myAttend').innerHTML=`
     <div class="attend-btns">
-      <button class="attend-btn ${v===true?'going-active':''}" onclick="setAttendance(1)">
-        ✅<span>VOY</span>
-      </button>
-      <button class="attend-btn ${v===false?'nope-active':''}" onclick="setAttendance(0)">
-        ❌<span>NO VOY</span>
-      </button>
+      <button class="attend-btn ${v===true?'going-active':''}" onclick="setAttendance(1)">✅<span>VOY</span></button>
+      <button class="attend-btn ${v===false?'nope-active':''}" onclick="setAttendance(0)">❌<span>NO VOY</span></button>
     </div>`;
-
   const grid=document.getElementById('attendGrid');grid.innerHTML='';
   PERSONS.forEach(p=>{
     const pval=d[p.toLowerCase()];
@@ -419,12 +436,62 @@ function renderAttendance(){
     const isMe=p===ME;
     const card=document.createElement('div');
     card.className='pcard'+(pv===true?' going':pv===false?' nope':'')+(isMe?' me':' other');
-    card.innerHTML=`
-      <div class="pavatar" style="color:${COLORS[p]};${isMe?'outline:2px solid '+COLORS[p]+';outline-offset:2px':''}">${PI[p]}</div>
-      <div class="pname">${p}</div>
-      <div class="pstatus">${pv===true?'✅':pv===false?'❌':'❓'}</div>`;
+    card.innerHTML=`<div class="pavatar" style="color:${COLORS[p]};${isMe?'outline:2px solid '+COLORS[p]+';outline-offset:2px':''}">${PI[p]}</div><div class="pname">${p}</div><div class="pstatus">${pv===true?'✅':pv===false?'❌':'❓'}</div>`;
     grid.appendChild(card);
   });
+}
+
+/* ── EJERCICIOS DEL DÍA CON PESOS ── */
+async function buildDayExList(){
+  const el=document.getElementById('dayExList');
+  if(!el)return;
+  const r=ROUTINE[todayDay];
+  if(!r||!r.exercises.length){el.innerHTML='';return;}
+  await loadPesosParaPerson(ME);
+  if(!cache.records)await loadRecords();
+  el.innerHTML='';
+  r.exercises.forEach((ex,i)=>{
+    const isRec=ex.type==='record';
+    const w=isRec?null:getPesoHoy(ME,ex.name);
+    const pr=(cache.records||[]).find(r=>r.persona.toLowerCase()===ME.toLowerCase()&&r.ejercicio===ex.name);
+    const histEntries=isRec?[]:getPesoHistorial(ME,ex.name);
+    const lastPrev=histEntries.find(e=>e.fecha!==todayStr);
+
+    const repsLabel=isRec?'lo que te dé 😤':`${ex.repsMin}-${ex.repsMax} reps`;
+    const weightLabel=isRec
+      ?(pr?`🏆 ${pr.valor} reps`:'Sin récord')
+      :(w?`${w} kg`:'+ Peso');
+    const weightClass=w||pr?'':'empty';
+
+    const acc=document.createElement('div');
+    acc.className='ex-accordion';
+    acc.id=`exacc-${i}`;
+    acc.innerHTML=`
+      <div class="ex-accordion-header" onclick="toggleAcc(${i})">
+        <div class="ex-acc-left">
+          <div>
+            <div class="ex-acc-name">${isRec?'🏆 ':''} ${ex.name}</div>
+            <div class="ex-acc-reps">${repsLabel}</div>
+          </div>
+        </div>
+        <div style="display:flex;align-items:center;gap:6px">
+          <span class="ex-acc-weight ${weightClass}">${weightLabel}</span>
+          <span class="ex-acc-arrow">▼</span>
+        </div>
+      </div>
+      <div class="ex-accordion-body">
+        <div class="ex-body-row">
+          <div class="ex-hist-mini">${lastPrev?`Última vez: <span>${lastPrev.peso_kg} kg</span> (${lastPrev.fecha})`:(pr?`Récord actual: <span>${pr.valor} reps</span>`:'Sin historial previo')}</div>
+          <button class="weight-btn ${weightClass}" onclick='openModal(${JSON.stringify(ex)})'>${isRec?(pr?'Actualizar récord':'Marcar récord'):(w?`Editar (${w} kg)`:'Cargar peso')}</button>
+        </div>
+        ${!isRec&&histEntries.length>1?`<div style="margin-top:8px">${histEntries.slice(0,3).map(e=>`<div class="hist-row"><span class="hist-date">${e.fecha}</span><span class="hist-w">${e.peso_kg} kg</span></div>`).join('')}</div>`:''}
+      </div>`;
+    el.appendChild(acc);
+  });
+}
+function toggleAcc(i){
+  const acc=document.getElementById(`exacc-${i}`);
+  acc.classList.toggle('open');
 }
 
 async function loadPesosParaPerson(persona){
@@ -439,51 +506,15 @@ function getPesoHoy(persona,ejercicio){
 }
 function getPesoHistorial(persona,ejercicio){
   const rows=cache.pesos[persona]||[];
-  return rows.filter(r=>r.ejercicio===ejercicio).sort((a,b)=>b.fecha.localeCompare(a.fecha)).slice(0,4);
-}
-
-function buildPersonSelector(){
-  const el=document.getElementById('personSelector');if(!el)return;el.innerHTML='';
-  PERSONS.forEach(p=>{
-    const b=document.createElement('div');b.className='psel-btn'+(p===selP?' active':'');
-    b.textContent=p+(p===ME?' ★':'');
-    b.onclick=async()=>{selP=p;buildPersonSelector();await loadPesosParaPerson(p);buildExList();};
-    el.appendChild(b);
-  });
-}
-function buildExList(){
-  const r=ROUTINE[todayDay],list=document.getElementById('exList');
-  if(!list)return;
-  list.innerHTML='';const isMe=selP===ME;
-  r.exercises.forEach(ex=>{
-    const isRec=ex.type==='record';
-    const w=isRec?null:getPesoHoy(selP,ex.name);
-    const pr=(cache.records||[]).find(r=>r.persona.toLowerCase()===selP.toLowerCase()&&r.ejercicio===ex.name);
-    const item=document.createElement('div');item.className='exitem'+(isRec?' record-type':'');
-    let tags='';
-    if(ex.note==='dropset')tags+=`<span class="ex-tag tag-drop">dropset</span>`;
-    if(ex.note==='smith')tags+=`<span class="ex-tag tag-smith">smith</span>`;
-    if(isRec)tags+=`<span class="ex-tag tag-rec">🏆 récord</span>`;
-    const right=isRec
-      ?`<div class="record-badge">🏆 ${pr?pr.valor+' reps':'—'}</div><button class="weight-btn" ${!isMe?'disabled':''} onclick='openModal(${JSON.stringify(ex)})'>${isMe?'+ Marcar':'🔒'}</button>`
-      :`<button class="weight-btn ${w?'':'empty'}" ${!isMe?'disabled':''} onclick='openModal(${JSON.stringify(ex)})'>${w?w+' kg':isMe?'+ Peso':'—'}</button>`;
-    item.innerHTML=`<div><div class="ex-name">${ex.name}</div><div class="ex-series">${isRec?'Máx reps consecutivas':ex.series+'×'+ex.repsMin+'-'+ex.repsMax+' reps'}</div>${tags}</div><div class="ex-right">${right}</div>`;
-    list.appendChild(item);
-  });
-  if(!isMe){
-    const n=document.createElement('div');
-    n.style.cssText='text-align:center;padding:10px;font-size:.7rem;color:var(--muted);margin-top:4px;';
-    n.textContent=`Viendo pesos de ${selP} · Solo podés editar los tuyos`;
-    list.appendChild(n);
-  }
+  return rows.filter(r=>r.ejercicio===ejercicio).sort((a,b)=>b.fecha.localeCompare(a.fecha)).slice(0,5);
 }
 
 let modalEx=null;
 function openModal(ex){
-  if(selP!==ME)return;modalEx=ex;
+  modalEx=ex;
   const isRec=ex.type==='record';
   document.getElementById('modalExName').textContent=ex.name;
-  document.getElementById('modalExSeries').textContent=isRec?'Récord de repeticiones consecutivas':`${ex.series} series · ${ex.repsMin}-${ex.repsMax} reps`;
+  document.getElementById('modalExSeries').textContent=isRec?'Récord de repeticiones — lo que te dé 😤':`${ex.repsMin}-${ex.repsMax} reps`;
   document.getElementById('weightUnit').textContent=isRec?'reps':'kg';
   document.getElementById('weightInput').value=isRec?((cache.records||[]).find(r=>r.persona.toLowerCase()===ME.toLowerCase()&&r.ejercicio===ex.name)?.valor||''):(getPesoHoy(ME,ex.name)||'');
   const hist=document.getElementById('modalHist');
@@ -493,6 +524,7 @@ function openModal(ex){
     hist.innerHTML=entries.length?`<div class="mhist-title">Tu historial</div>`+entries.map(e=>`<div class="hist-row"><span class="hist-date">${e.fecha}</span><span class="hist-w">${e.peso_kg} kg</span></div>`).join(''):'<div class="mhist-title" style="margin-bottom:0">Sin historial aún</div>';
   }
   document.getElementById('modalOverlay').classList.add('open');
+  setTimeout(()=>document.getElementById('weightInput').focus(),200);
 }
 function closeModal(){document.getElementById('modalOverlay').classList.remove('open');modalEx=null;}
 async function saveWeight(){
@@ -506,14 +538,14 @@ async function saveWeight(){
       if(res.nuevo_record){showToast('🏆 ¡Nuevo récord! '+val+' reps','ok');cache.records=null;await loadRecords();}
       else showToast('Récord actual: '+res.valor+' reps');
     }else{
-      await api({action:'setPeso',persona:ME,ejercicio:modalEx.name,peso_kg:val,fecha:todayStr,series:modalEx.series,reps_min:modalEx.repsMin,reps_max:modalEx.repsMax});
+      await api({action:'setPeso',persona:ME,ejercicio:modalEx.name,peso_kg:val,fecha:todayStr,series:3,reps_min:modalEx.repsMin,reps_max:modalEx.repsMax});
       if(!cache.pesos[ME])cache.pesos[ME]=[];
       const idx=cache.pesos[ME].findIndex(r=>r.fecha===todayStr&&r.ejercicio===modalEx.name);
       if(idx>=0)cache.pesos[ME][idx].peso_kg=val;
       else cache.pesos[ME].push({fecha:todayStr,persona:ME,ejercicio:modalEx.name,peso_kg:val});
       showToast('💾 Guardado: '+val+' kg','ok');
     }
-    buildExList();
+    buildDayExList();
   }catch(e){showToast('Error al guardar','err');}
 }
 document.getElementById('modalOverlay').addEventListener('click',e=>{if(e.target===document.getElementById('modalOverlay'))closeModal();});
@@ -522,16 +554,40 @@ async function loadRecords(){
   try{cache.records=await api({action:'getRecords'});}catch(e){cache.records=[];}
 }
 
+/* ── RUTINA PAGE (acordeón por día) ── */
 function buildRutinaPage(){
   const el=document.getElementById('rutinaFull');el.innerHTML='';
-  GYM_DAYS.forEach(day=>{
-    const r=ROUTINE[day],b=document.createElement('div');
-    b.style.cssText='background:var(--card);border:1px solid var(--border);border-radius:14px;margin-bottom:10px;overflow:hidden;';
-    b.innerHTML=`<div style="padding:13px 16px;background:#0d0d0d;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:10px"><span style="font-size:1.3rem">${r.emoji}</span><div><div style="font-size:.58rem;text-transform:uppercase;letter-spacing:1.5px;color:var(--accent);font-weight:700">${day}</div><div style="font-size:.95rem;font-weight:800;margin-top:1px">${r.muscle}</div></div></div><div style="padding:10px 16px 14px">${r.exercises.map(ex=>`<div style="display:flex;justify-content:space-between;padding:7px 0;border-bottom:1px solid var(--border);font-size:.8rem;align-items:center"><span>${ex.type==='record'?'🏆 ':''} ${ex.name}${ex.note?` <span style="font-size:.6rem;color:#5b9cf6">(${ex.note})</span>`:''}</span><span style="color:var(--muted);font-size:.7rem;white-space:nowrap">${ex.type==='record'?'récord':ex.series+'×'+ex.repsMin+'-'+ex.repsMax}</span></div>`).join('')}</div>`;
+  GYM_DAYS.forEach((day,di)=>{
+    const r=ROUTINE[day];
+    const b=document.createElement('div');
+    b.className='rut-day-block'+(day===todayDay?' open':'');
+    b.id=`rutday-${di}`;
+    b.innerHTML=`
+      <div class="rut-day-header" onclick="toggleRutDay(${di})">
+        <div class="rut-day-left">
+          <span style="font-size:1.3rem">${r.emoji}</span>
+          <div>
+            <div style="font-size:.58rem;text-transform:uppercase;letter-spacing:1.5px;color:var(--accent);font-weight:700">${day}</div>
+            <div style="font-size:.95rem;font-weight:800;margin-top:1px">${r.muscle}</div>
+          </div>
+        </div>
+        <span class="rut-day-arrow">▼</span>
+      </div>
+      <div class="rut-day-body">
+        ${r.exercises.map(ex=>`
+          <div class="rut-ex-row">
+            <span>${ex.type==='record'?'🏆 ':''} ${ex.name}</span>
+            <span style="color:var(--muted);font-size:.7rem">${ex.type==='record'?'lo que te dé 😤':ex.repsMin+'-'+ex.repsMax+' reps'}</span>
+          </div>`).join('')}
+      </div>`;
     el.appendChild(b);
   });
 }
+function toggleRutDay(i){
+  document.getElementById(`rutday-${i}`).classList.toggle('open');
+}
 
+/* ── HISTORIAL PAGE ── */
 let histP=null;
 async function buildHistPage(){
   if(!histP)histP=ME;
@@ -561,6 +617,7 @@ async function buildHistPage(){
   if(!found)content.innerHTML=`<div style="text-align:center;padding:40px;color:var(--muted)"><div style="font-size:2rem;margin-bottom:8px">📭</div><div>Sin datos para ${histP} todavía.<br>¡Empezá a cargar pesos!</div></div>`;
 }
 
+/* ── STATS PAGE ── */
 async function buildStatsPage(){
   document.getElementById('statsGrid').innerHTML='<div class="loading" style="grid-column:1/-1"><span class="spin">⏳</span></div>';
   try{
@@ -573,7 +630,7 @@ async function buildStatsPage(){
     const avg=totalDays?(tot/totalDays).toFixed(1):0;
     document.getElementById('statsGrid').innerHTML=`
       <div class="stat-card"><div class="stat-n">${totalDays}</div><div class="stat-l">Días este mes</div></div>
-      <div class="stat-card"><div class="stat-n">${avg}</div><div class="stat-l">Promedio van</div></div>
+      <div class="stat-card"><div class="stat-n">${avg}</div><div class="stat-l">Promedio de asistentes</div></div>
       <div class="stat-card"><div class="stat-n">${Math.max(0,...Object.values(cnt))}</div><div class="stat-l">Máx sesiones</div></div>`;
     const as=document.getElementById('attendStats');as.innerHTML='';
     [...PERSONS].sort((a,b)=>cnt[b]-cnt[a]).forEach(p=>{
@@ -593,7 +650,7 @@ function showPage(id){
   ['restView','gymView','pageRutina','pageHistorial','pageStats'].forEach(p=>document.getElementById(p).classList.add('hidden'));
   if(id==='hoy'){
     if(isRest){document.getElementById('restView').classList.remove('hidden');buildRestDay();}
-    else{document.getElementById('gymView').classList.remove('hidden');buildWeekStrip();buildAttendance();}
+    else{document.getElementById('gymView').classList.remove('hidden');buildWeekStrip();buildAttendance();buildDayExList();}
   }else{
     document.getElementById(id).classList.remove('hidden');
     if(id==='pageRutina')buildRutinaPage();
