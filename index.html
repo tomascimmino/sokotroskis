@@ -17,8 +17,8 @@
 }
 body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--text);max-width:520px;margin:0 auto;min-height:100vh;-webkit-font-smoothing:antialiased;}
 /* ── LOGIN ── */
-#loginScreen{position:fixed;inset:0;background:var(--bg);z-index:200;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:32px 24px;}
-.login-sub{font-size:0.75rem;color:var(--muted);letter-spacing:1.5px;text-transform:uppercase;margin-bottom:40px;}
+#loginScreen{position:fixed;inset:0;background:var(--bg);z-index:200;display:flex;flex-direction:column;align-items:center;justify-content:flex-start;padding:24px 24px 32px;overflow-y:auto;}
+.login-sub{font-size:0.75rem;color:var(--muted);letter-spacing:1.5px;text-transform:uppercase;margin-bottom:24px;}
 .login-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;width:100%;max-width:340px;}
 .login-btn{background:var(--card);border:1.5px solid var(--border);border-radius:16px;padding:20px 10px;text-align:center;cursor:pointer;transition:border-color .2s,background .2s;user-select:none;}
 .login-btn:active{transform:scale(.96);}
@@ -210,7 +210,7 @@ svg.linechart{width:100%;overflow:visible;}
 <body>
 
 <div id="loginScreen">
-  <img src="https://i.imgur.com/doJIzda.png" style="width:220px;height:220px;border-radius:36px;margin-bottom:10px;">
+  <img src="https://i.imgur.com/doJIzda.png" style="width:140px;height:140px;border-radius:28px;margin-bottom:8px;margin-top:12px;">
   <div class="login-sub">Seleccioná tu perfil</div>
   <div class="login-grid" id="loginGrid"></div>
 </div>
@@ -227,7 +227,7 @@ svg.linechart{width:100%;overflow:visible;}
     </div>
   </header>
   <div class="day-banner" id="dayBanner"></div>
-  <div id="restView" class="hidden"></div>
+  <div id="restView" class="hidden"><div id="bodyWeightCardRest" style="padding:0 16px 16px"></div></div>
   <div id="gymView" class="hidden">
     <div class="section" style="padding:16px 16px 0">
       <div class="section-title">Esta semana</div>
@@ -240,9 +240,13 @@ svg.linechart{width:100%;overflow:visible;}
         <div class="section-title" style="margin-top:4px">El grupo</div>
         <div class="attend-grid" id="attendGrid"></div>
       </div>
-      <div class="section">
+     <div class="section">
         <div class="section-title">Ejercicios de hoy</div>
         <div class="day-exercises" id="dayExList"></div>
+      </div>
+      <div class="section">
+        <div class="section-title">Mi peso corporal</div>
+        <div id="bodyWeightCard"></div>
       </div>
     </div>
   </div>
@@ -405,11 +409,12 @@ async function buildRestDay(){
     <div class="info-card"><div class="info-card-title">Asistencia del grupo — ${today.toLocaleDateString('es-AR',{month:'long'})}</div>
       ${PERSONS.map(p=>`<div class="ra-row"><div class="ra-person"><div class="ra-av" style="color:${COLORS[p]}">${PI[p]}</div><div class="ra-name">${p}${p===ME?' ●':''}</div></div><div class="ra-bar-wrap"><div class="ra-bar" style="width:${Math.round(cnt[p]/maxCnt*100)}%;background:${COLORS[p]}"></div></div><div class="ra-count" style="color:${COLORS[p]}">${cnt[p]}</div></div>`).join('')}
     </div>
-    <div class="info-card"><div class="info-card-title">Tu mes, ${ME}</div><div class="streak-row">
+<div class="info-card"><div class="info-card-title">Tu mes, ${ME}</div><div class="streak-row">
       <div class="streak-item"><div class="streak-n">${cnt[ME]}</div><div class="streak-l">Sesiones</div></div>
       <div class="streak-item"><div class="streak-n">${Math.round(cnt[ME]/totalDays*100)}%</div><div class="streak-l">Asistencia</div></div>
       <div class="streak-item"><div class="streak-n">${[...PERSONS].sort((a,b)=>cnt[b]-cnt[a]).indexOf(ME)+1}°</div><div class="streak-l">Ranking</div></div>
     </div></div>`;
+  setTimeout(()=>buildBodyWeightCard('bodyWeightCardRest'),100);
 }
 function buildWeekStrip(){
   const el=document.getElementById('weekStrip');el.innerHTML='';
@@ -550,6 +555,8 @@ async function saveWeight(){
       showToast('💾 Guardado: '+val+' kg','ok');
     }
     buildDayExList();
+    buildBodyWeightCard('bodyWeightCard');
+    buildBodyWeightCard('bodyWeightCardRest');
   }catch(e){showToast('Error: '+e.message,'err');console.error(e);}
 }
 document.getElementById('modalOverlay').addEventListener('click',e=>{if(e.target===document.getElementById('modalOverlay'))closeModal();});
@@ -742,6 +749,31 @@ function renderHistChart(persona,ejercicio){
     });
   }
 }
+  async function buildBodyWeightCard(targetId='bodyWeightCard'){
+  const el=document.getElementById(targetId);if(!el)return;
+  await loadPesosParaPerson(ME);
+  const BW_EX={name:'Peso corporal',type:'body_weight',repsMin:null,repsMax:null};
+  const hist=getPesoHistorial(ME,'Peso corporal');
+  const hoy=getPesoHoy(ME,'Peso corporal');
+  const last=hist.find(e=>e.fecha!==todayStr);
+  const delta=hoy&&last?(+(+hoy - +last.peso_kg).toFixed(1)):null;
+  const dc=delta===null?'':delta>0?'delta-up':delta<0?'delta-down':'delta-eq';
+  const ds=delta===null?'':(delta>0?`+${delta} kg`:delta<0?`${delta} kg`:'=');
+  el.innerHTML=`<div class="info-card">
+    <div class="info-card-title">Peso corporal — ${ME}</div>
+    <div style="display:flex;align-items:center;justify-content:space-between">
+      <div>
+        <div style="font-size:2rem;font-weight:900;color:var(--accent)">${hoy?hoy+' kg':'—'}</div>
+        <div style="font-size:.7rem;color:var(--muted);margin-top:4px">${last?'Antes: '+last.peso_kg+' kg ('+last.fecha+')':'Sin registros previos'}</div>
+      </div>
+      <div style="display:flex;flex-direction:column;align-items:flex-end;gap:8px">
+        ${delta!==null?`<span class="hist-entry-delta ${dc}">${ds}</span>`:''}
+        <button class="weight-btn ${hoy?'':'empty'}" onclick='openModal(${JSON.stringify(BW_EX)})'>${hoy?'Editar ('+hoy+' kg)':'+ Registrar'}</button>
+      </div>
+    </div>
+    ${hist.length>1?`<div style="margin-top:12px;border-top:1px solid var(--border);padding-top:10px">${hist.slice(0,4).map(e=>`<div class="hist-row"><span class="hist-date">${e.fecha}</span><span class="hist-w">${e.peso_kg} kg</span></div>`).join('')}</div>`:''}
+  </div>`;
+}
 
 async function buildStatsPage(){
   document.getElementById('statsGrid').innerHTML='<div class="loading" style="grid-column:1/-1"><span class="spin">⏳</span></div>';
@@ -774,7 +806,7 @@ function showPage(id){
   ['restView','gymView','pageRutina','pageHistorial','pageStats'].forEach(p=>document.getElementById(p).classList.add('hidden'));
   if(id==='hoy'){
     if(isRest){document.getElementById('restView').classList.remove('hidden');buildRestDay();}
-    else{document.getElementById('gymView').classList.remove('hidden');buildWeekStrip();buildAttendance();buildDayExList();}
+    else{document.getElementById('gymView').classList.remove('hidden');buildWeekStrip();buildAttendance();buildDayExList();buildBodyWeightCard('bodyWeightCard');}
   }else{
     document.getElementById(id).classList.remove('hidden');
     if(id==='pageRutina')buildRutinaPage();
