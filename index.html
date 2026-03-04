@@ -518,20 +518,12 @@ function getPesoHistorial(persona,ejercicio){
   const rows=cache.pesos[persona]||[];
   return rows.filter(r=>r.ejercicio===ejercicio).sort((a,b)=>b.fecha.localeCompare(a.fecha)).slice(0,30);
 }
-function fmtFecha(f){
-  try{
-    const d=new Date(f.length<=10?f+'T12:00:00':f);
-    return d.toLocaleDateString('es-AR',{day:'numeric',month:'short'});
-  }catch(e){return f.slice(5)||f;}
-}
-
 let modalEx=null;
 function openModal(ex){
   modalEx=ex;
   const isRec=ex.type==='record';
   document.getElementById('modalExName').textContent=ex.name;
-  const isBW=ex.type==='body_weight';
-  document.getElementById('modalExSeries').textContent=isRec?'Récord de repeticiones — lo que te dé 😤':isBW?'Tu peso corporal de hoy':`${ex.repsMin}-${ex.repsMax} reps`;
+  document.getElementById('modalExSeries').textContent=isRec?'Récord de repeticiones — lo que te dé 😤':`${ex.repsMin}-${ex.repsMax} reps`;
   document.getElementById('weightUnit').textContent=isRec?'reps':'kg';
   document.getElementById('weightInput').value=isRec?((cache.records||[]).find(r=>r.persona.toLowerCase()===ME.toLowerCase()&&r.ejercicio===ex.name)?.valor||''):(getPesoHoy(ME,ex.name)||'');
   const hist=document.getElementById('modalHist');
@@ -668,32 +660,6 @@ async function buildHistPage(){
     groupsEl.appendChild(group);
   });
 
-  // Grupo especial: Peso corporal
-  const bwData=getPesoHistorial(histP,'Peso corporal');
-  if(bwData.length>0){
-    const group=document.createElement('div');
-    group.className='ex-group';
-    const label=document.createElement('div');
-    label.className='ex-group-label';
-    label.innerHTML=`<span class="eg-emoji">⚖️</span>Peso corporal`;
-    group.appendChild(label);
-    const pills=document.createElement('div');
-    pills.className='ex-group-pills';
-    const btn=document.createElement('button');
-    btn.className='ex-tab'+('Peso corporal'===histEx?' active':'');
-    btn.textContent='⚖️ Peso corporal';
-    btn.onclick=()=>{
-      histEx='Peso corporal';
-      document.querySelectorAll('.ex-tab').forEach(t=>t.classList.remove('active'));
-      btn.classList.add('active');
-      renderHistChart(histP,'Peso corporal');
-    };
-    pills.appendChild(btn);
-    group.appendChild(pills);
-    groupsEl.appendChild(group);
-    if(!histEx)histEx='Peso corporal';
-  }
-
   renderHistChart(histP,histEx);
 }
 
@@ -732,7 +698,7 @@ function renderHistChart(persona,ejercicio){
           <stop offset="100%" stop-color="${chartColor}" stop-opacity="0.02"/>
         </linearGradient></defs>
         ${yLabs.map(v=>`<line x1="${PL}" y1="${yS(v)+PT}" x2="${W-PR}" y2="${yS(v)+PT}" stroke="#1f1f1f" stroke-width="1"/><text x="${PL-4}" y="${yS(v)+PT+4}" text-anchor="end" font-size="8" fill="#444">${v.toFixed(0)}</text>`).join('')}
-        ${xLabs.map(d=>{const idx=data.findIndex(x=>x.fecha===d.fecha);return`<text x="${xS(idx)+PL}" y="${H-2}" text-anchor="middle" font-size="8" fill="#444">${fmtFecha(d.fecha)}</text>`}).join('')}
+        ${xLabs.map(d=>{const idx=data.findIndex(x=>x.fecha===d.fecha);return`<text x="${xS(idx)+PL}" y="${H-2}" text-anchor="middle" font-size="8" fill="#444">${d.fecha.slice(5)}</text>`}).join('')}
         <path d="${fill}" fill="url(#ag)"/>
         <path d="${line}" fill="none" stroke="${chartColor}" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>
         ${pts.map((p,i)=>`<circle cx="${p.x}" cy="${p.y}" r="${i===pts.length-1?4:3}" fill="${i===pts.length-1?chartColor:'#111'}" stroke="${chartColor}" stroke-width="1.5" class="dot" data-i="${i}" style="cursor:pointer"/>`).join('')}
@@ -761,7 +727,7 @@ function renderHistChart(persona,ejercicio){
         const delta=prev?(+(+d.peso_kg - +prev.peso_kg).toFixed(1)):null;
         const dc=delta===null?'':delta>0?'delta-up':delta<0?'delta-down':'delta-eq';
         const ds=delta===null?'':(delta>0?`+${delta} kg`:delta<0?`${delta} kg`:'=');
-        return`<div class="hist-entry"><span class="hist-entry-date">${fmtFecha(d.fecha)}</span><div style="display:flex;align-items:center;gap:8px">${prev?`<span class="hist-entry-delta ${dc}">${ds}</span>`:''}<span class="hist-entry-weight">${d.peso_kg} kg</span></div></div>`;
+        return`<div class="hist-entry"><span class="hist-entry-date">${d.fecha}</span><div style="display:flex;align-items:center;gap:8px">${prev?`<span class="hist-entry-delta ${dc}">${ds}</span>`:''}<span class="hist-entry-weight">${d.peso_kg} kg</span></div></div>`;
       }).join('')}
     </div>
   </div>`;
@@ -772,7 +738,7 @@ function renderHistChart(persona,ejercicio){
         const d=data[idx],prev=data[idx+1];
         const delta=prev?(+(+d.peso_kg - +prev.peso_kg).toFixed(1)):null;
         const dh=delta!==null?`<div class="tt-delta" style="color:${delta>=0?'#2ecc71':'#e05555'}">${delta>=0?'+':''}${delta} kg vs anterior</div>`:'';
-        tip.innerHTML=`<div class="tt-date">${fmtFecha(d.fecha)}</div><div class="tt-weight">${d.peso_kg} kg</div>${dh}`;
+        tip.innerHTML=`<div class="tt-date">${d.fecha}</div><div class="tt-weight">${d.peso_kg} kg</div>${dh}`;
         const wr=wrap.getBoundingClientRect(),dr=dot.getBoundingClientRect();
         let l=dr.left-wr.left-40,t=dr.top-wr.top-62;
         if(l<0)l=0;if(l>wr.width-120)l=wr.width-120;
@@ -840,25 +806,8 @@ async function buildStatsPage(){
 function showPage(id){
   ['restView','gymView','pageRutina','pageHistorial','pageStats'].forEach(p=>document.getElementById(p).classList.add('hidden'));
   if(id==='hoy'){
-    if(isRest){
-      document.getElementById('restView').classList.remove('hidden');
-      buildRestDay();
-    }else{
-      document.getElementById('gymView').classList.remove('hidden');
-      buildWeekStrip();
-      // Disparar todo en paralelo
-      setSyncStatus('syncing');
-      Promise.all([
-        api({action:'getAsistencia',fecha:todayStr}).then(d=>{cache.asistencia=d;}).catch(()=>{}),
-        cache.pesos[ME]?Promise.resolve():api({action:'getPesos',persona:ME}).then(d=>{cache.pesos[ME]=d||[];}).catch(()=>{cache.pesos[ME]=[];}),
-        cache.records&&cache.records.length?Promise.resolve():api({action:'getRecords'}).then(d=>{cache.records=d||[];}).catch(()=>{cache.records=[];})
-      ]).then(()=>{
-        setSyncStatus('ok');
-        renderAttendance();
-        buildDayExList();
-        buildBodyWeightCard('bodyWeightCard');
-      }).catch(()=>setSyncStatus('error'));
-    }
+    if(isRest){document.getElementById('restView').classList.remove('hidden');buildRestDay();}
+    else{document.getElementById('gymView').classList.remove('hidden');buildWeekStrip();buildAttendance();buildDayExList();buildBodyWeightCard('bodyWeightCard');}
   }else{
     document.getElementById(id).classList.remove('hidden');
     if(id==='pageRutina')buildRutinaPage();
