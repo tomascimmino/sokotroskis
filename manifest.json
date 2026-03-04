@@ -1,0 +1,13 @@
+{
+  "name": "SOKOTROSKIS",
+  "short_name": "SOKOS",
+  "start_url": "./index.html",
+  "display": "standalone",
+  "background_color": "#0a0a0a",
+  "theme_color": "#0a0a0a",
+  "orientation": "portrait",
+  "icons": [
+    {"src": "https://i.imgur.com/doJIzda.png", "sizes": "192x192", "type": "image/png"},
+    {"src": "https://i.imgur.com/doJIzda.png", "sizes": "512x512", "type": "image/png"}
+  ]
+}
