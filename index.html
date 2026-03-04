@@ -6,6 +6,7 @@
 <link rel="icon" type="image/png" href="https://i.imgur.com/doJIzda.png">
 <link rel="apple-touch-icon" href="https://i.imgur.com/doJIzda.png">
 <meta name="theme-color" content="#0a0a0a">
+<link rel="manifest" href="manifest.json">
 <title>SOKOTROSKIS</title>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;900&display=swap" rel="stylesheet">
 <style>
@@ -842,7 +843,7 @@ function switchPage(el){
   document.querySelectorAll('.nav-item').forEach(n=>n.classList.remove('active'));
   el.classList.add('active');showPage(el.dataset.page);
 }
-buildLogin();
+if('serviceWorker' in navigator){navigator.serviceWorker.register('sw.js').catch(()=>{});} buildLogin();
 if(ME){
   document.getElementById('loginScreen').classList.add('hidden');
   document.getElementById('app').classList.remove('hidden');
