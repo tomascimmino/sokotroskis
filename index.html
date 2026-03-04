@@ -778,7 +778,7 @@ function renderHistChart(persona,ejercicio){
     <div style="display:flex;align-items:center;justify-content:space-between">
       <div>
         <div style="font-size:2rem;font-weight:900;color:var(--accent)">${hoy?hoy+' kg':'—'}</div>
-        <div style="font-size:.7rem;color:var(--muted);margin-top:4px">${last?'Antes: '+last.peso_kg+' kg ('+last.fecha+')':'Sin registros previos'}</div>
+        <div style="font-size:.7rem;color:var(--muted);margin-top:4px">${last?'Antes: '+last.peso_kg+' kg ('+fmtFecha(last.fecha)+')':'Sin registros previos'}</div>
       </div>
       <div style="display:flex;flex-direction:column;align-items:flex-end;gap:8px">
         ${delta!==null?`<span class="hist-entry-delta ${dc}">${ds}</span>`:''}
