@@ -227,7 +227,7 @@ svg.linechart{width:100%;overflow:visible;}
     </div>
   </header>
   <div class="day-banner" id="dayBanner"></div>
-  <div id="restView" class="hidden"><div id="bodyWeightCardRest" style="padding:0 16px 16px"></div></div>
+  <div id="restView" class="hidden"></div>
   <div id="gymView" class="hidden">
     <div class="section" style="padding:16px 16px 0">
       <div class="section-title">Esta semana</div>
@@ -413,7 +413,8 @@ async function buildRestDay(){
       <div class="streak-item"><div class="streak-n">${cnt[ME]}</div><div class="streak-l">Sesiones</div></div>
       <div class="streak-item"><div class="streak-n">${Math.round(cnt[ME]/totalDays*100)}%</div><div class="streak-l">Asistencia</div></div>
       <div class="streak-item"><div class="streak-n">${[...PERSONS].sort((a,b)=>cnt[b]-cnt[a]).indexOf(ME)+1}°</div><div class="streak-l">Ranking</div></div>
-    </div></div>`;
+</div></div>
+    <div id="bodyWeightCardRest" style="margin-top:2px"></div>`;
   setTimeout(()=>buildBodyWeightCard('bodyWeightCardRest'),100);
 }
 function buildWeekStrip(){
