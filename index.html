@@ -548,7 +548,7 @@ async function saveWeight(){
       showToast('💾 Guardado: '+val+' kg','ok');
     }
     buildDayExList();
-  }catch(e){showToast('Error al guardar','err');}
+  }catch(e){showToast('Error: '+e.message,'err');console.error(e);}
 }
 document.getElementById('modalOverlay').addEventListener('click',e=>{if(e.target===document.getElementById('modalOverlay'))closeModal();});
 
