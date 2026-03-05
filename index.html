@@ -882,6 +882,7 @@ async function buildHistPage(){
     html=`<div style="text-align:center;padding:40px;color:var(--muted)"><div style="font-size:2rem;margin-bottom:8px">📭</div>Sin datos para ${histP} todavía.<br>¡Empezá a cargar pesos!</div>`;
   }
   content.innerHTML=html;
+  wireChartTooltips();
 }
 
 function renderInlineChart(data,color,id){
@@ -912,6 +913,8 @@ function renderInlineChart(data,color,id){
 }
 
 // ── INLINE CHART ─────────────────────────────────────────────
+// Store chart data for tooltip wiring after innerHTML
+const _chartData={};
 function renderInlineChart(data,color,uid){
   if(!data||data.length<2)return'';
   const W=288,H=80,PL=28,PR=8,PT=8,PB=18;
@@ -924,9 +927,10 @@ function renderInlineChart(data,color,uid){
   const line=pts.map((p,i)=>(i===0?`M${p.x},${p.y}`:`L${p.x},${p.y}`)).join(' ');
   const fill=`${line} L${pts[pts.length-1].x},${H-PB+PT} L${pts[0].x},${H-PB+PT} Z`;
   const safe=uid.replace(/[^a-z0-9]/gi,'_');
-  const gid='g'+safe, tipid='tip'+safe, wrapid='wrap'+safe;
-  const dotsHtml=pts.map((p,i)=>`<circle class="cdot" cx="${p.x}" cy="${p.y}" r="${i===pts.length-1?3.5:2.5}" fill="${i===pts.length-1?color:'#111'}" stroke="${color}" stroke-width="1.3" data-i="${i}" style="cursor:pointer"/>`).join('');
-  return`<div class="chart-wrap" id="${wrapid}" style="margin:10px 0 4px">
+  const gid='g'+safe,tipid='tip'+safe,wrapid='wrap'+safe;
+  _chartData[wrapid]={data,pts,color};
+  const dotsHtml=pts.map((p,i)=>`<circle class="cdot" cx="${p.x}" cy="${p.y}" r="${i===pts.length-1?3.5:2.5}" fill="${i===pts.length-1?color:'#111'}" stroke="${color}" stroke-width="1.3" data-w="${wrapid}" data-i="${i}" style="cursor:pointer"/>`).join('');
+  return`<div class="chart-wrap" id="${wrapid}" style="margin:10px 0 4px;position:relative">
     <svg viewBox="0 0 ${W} ${H}" style="width:100%;overflow:visible">
       <defs><linearGradient id="${gid}" x1="0" y1="0" x2="0" y2="1">
         <stop offset="0%" stop-color="${color}" stop-opacity="0.22"/>
@@ -939,33 +943,34 @@ function renderInlineChart(data,color,uid){
       ${dotsHtml}
     </svg>
     <div id="${tipid}" style="position:absolute;background:#1a1a1a;border:1px solid ${color};border-radius:8px;padding:6px 10px;font-size:.68rem;pointer-events:none;opacity:0;transition:opacity .15s;white-space:nowrap;z-index:10;top:0;left:0"></div>
-  </div>
-  <script>(function(){
-    const wrap=document.getElementById('${wrapid}');
-    const tip=document.getElementById('${tipid}');
-    const pts=${JSON.stringify(pts)};
-    const data=${JSON.stringify(data)};
-    const color='${color}';
-    function showTip(i){
-      const d=data[i],prev=data[i-1];
+  </div>`;
+}
+function wireChartTooltips(){
+  document.querySelectorAll('.cdot').forEach(dot=>{
+    const wrapid=dot.dataset.w;
+    const cd=_chartData[wrapid];
+    if(!cd)return;
+    const tip=document.getElementById('tip'+wrapid.replace(/^wrap/,''));
+    if(!tip)return;
+    const showTip=()=>{
+      const i=+dot.dataset.i,d=cd.data[i],prev=cd.data[i-1];
       const delta=prev?(+(+d.peso_kg - +prev.peso_kg).toFixed(1)):null;
       const dclr=delta===null?'':delta>=0?'#2ecc71':'#e05555';
       const dstr=delta===null?'':`<br><span style="color:${dclr}">${delta>=0?'+':''}${delta} kg</span>`;
-      tip.innerHTML=`<span style="color:#888;font-size:.6rem">${d.fecha}</span><br><strong style="color:${color}">${d.peso_kg} kg</strong>${dstr}`;
-      const wr=wrap.getBoundingClientRect(),p=pts[i];
+      tip.innerHTML=`<span style="color:#888;font-size:.6rem">${d.fecha}</span><br><strong style="color:${cd.color}">${d.peso_kg} kg</strong>${dstr}`;
+      const wrap=document.getElementById(wrapid);
+      const wr=wrap.getBoundingClientRect();
       const svgW=wrap.querySelector('svg').getBoundingClientRect().width;
-      const scale=svgW/288;
-      let lx=p.x*scale-44, ty=p.y*scale-62;
-      if(lx<0)lx=0; if(lx>svgW-120)lx=svgW-120; if(ty<0)ty=4;
-      tip.style.left=lx+'px'; tip.style.top=ty+'px'; tip.style.opacity='1';
-    }
-    wrap.querySelectorAll('.cdot').forEach(dot=>{
-      const i=+dot.dataset.i;
-      dot.addEventListener('mouseenter',()=>showTip(i));
-      dot.addEventListener('mouseleave',()=>tip.style.opacity='0');
-      dot.addEventListener('touchstart',e=>{e.preventDefault();showTip(i);setTimeout(()=>tip.style.opacity='0',2000);},{passive:false});
-    });
-  })();<\/script>`;
+      const sc=svgW/288;
+      const p=cd.pts[i];
+      let lx=p.x*sc-44,ty=p.y*sc-62;
+      if(lx<0)lx=0;if(lx>svgW-120)lx=svgW-120;if(ty<0)ty=4;
+      tip.style.left=lx+'px';tip.style.top=ty+'px';tip.style.opacity='1';
+    };
+    dot.addEventListener('mouseenter',showTip);
+    dot.addEventListener('mouseleave',()=>tip.style.opacity='0');
+    dot.addEventListener('touchstart',e=>{e.preventDefault();showTip();setTimeout(()=>tip.style.opacity='0',2000);},{passive:false});
+  });
 }
 
 // ── STATS PAGE ────────────────────────────────────────────
