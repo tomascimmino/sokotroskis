@@ -301,13 +301,16 @@ const ROUTINE={
     {name:'Curl concentrado',repsMin:8,repsMax:12},
   ]},
   Jueves:{emoji:'🔙',muscle:'Espalda & Trícep',exercises:[
-    {name:'Jalón al pecho (polea)',repsMin:8,repsMax:12},
+    {name:'Jalón al pecho abierto',repsMin:8,repsMax:12},
+    {name:'Jalón al pecho cerrado',repsMin:8,repsMax:12},
     {name:'Remo con polea',repsMin:8,repsMax:12},
     {name:'Remo en T',repsMin:8,repsMax:12},
-    {name:'Dominadas',type:'record'},
+    {name:'Dominadas',repsMin:1,repsMax:20,unit:'reps'},
     {name:'Extensión trícep polea ↓',repsMin:8,repsMax:12},
     {name:'Extensión trícep polea ↑',repsMin:8,repsMax:12},
     {name:'Trícep tras nuca (mancuerna)',repsMin:8,repsMax:12},
+    {name:'Rompecráneo con mancuerna',repsMin:8,repsMax:12},
+    {name:'Rompecráneo con barra',repsMin:8,repsMax:12},
   ]},
   Viernes:{emoji:'🔝',muscle:'Hombro',exercises:[
     {name:'Press militar',repsMin:8,repsMax:12},
@@ -540,13 +543,15 @@ async function buildDayExList(){
   el.innerHTML='';
   r.exercises.forEach((ex,i)=>{
     const isRec=ex.type==='record';
+    const isReps=ex.unit==='reps';
     const exKey=getExKey(ex.name);
     const w=isRec?null:getPesoHoy(ME,exKey);
     const pr=(cache.records||[]).find(rec=>rec.persona.toLowerCase()===ME.toLowerCase()&&rec.ejercicio===exKey);
     const hist=isRec?[]:getPesoHistorial(ME,exKey);
     const lastPrev=hist.find(e=>e.fecha!==todayStr);
     const repsLabel=isRec?'lo que te dé 😤':`${ex.repsMin}-${ex.repsMax} reps`;
-    const wLabel=isRec?(pr?`🏆 ${pr.valor} reps`:'Sin récord'):(w?`${w} kg`:'+ Peso');
+    const unitLabel=isReps?'reps':'kg';
+    const wLabel=isRec?(pr?`🏆 ${pr.valor} reps`:'Sin récord'):(w?`${w} ${unitLabel}`:'+ '+(isReps?'Reps':'Peso'));
     const wClass=w||pr?'':'empty';
     let varHtml='';
     if(VARIANTS[ex.name]){
@@ -565,10 +570,10 @@ async function buildDayExList(){
       <div class="ex-accordion-body">
         ${varHtml}
         <div class="ex-body-row">
-          <div class="ex-hist-mini" id="exhist-${i}">${lastPrev?`Última vez: <span>${lastPrev.peso_kg} kg</span> (${lastPrev.fecha})`:(pr?`Récord: <span>${pr.valor} reps</span>`:'Sin historial')}</div>
-          <button class="weight-btn ${wClass}" id="exbtn-${i}" onclick='openModal(${JSON.stringify({...ex,name:exKey})})'>${isRec?(pr?'Actualizar':'Marcar récord'):(w?`Editar (${w} kg)`:'Cargar peso')}</button>
+          <div class="ex-hist-mini" id="exhist-${i}">${lastPrev?`Última vez: <span>${lastPrev.peso_kg} ${unitLabel}</span> (${lastPrev.fecha})`:(pr?`Récord: <span>${pr.valor} reps</span>`:'Sin historial')}</div>
+          <button class="weight-btn ${wClass}" id="exbtn-${i}" onclick='openModal(${JSON.stringify({...ex,name:exKey})})'>${isRec?(pr?'Actualizar':'Marcar récord'):(w?`Editar (${w} ${unitLabel})`:'Cargar '+(isReps?'reps':'peso'))}</button>
         </div>
-        ${!isRec&&hist.length>1?`<div id="exhistlist-${i}">${hist.slice(0,3).map(e=>`<div class="hist-row"><span class="hist-date">${e.fecha}</span><span class="hist-w">${e.peso_kg} kg</span></div>`).join('')}</div>`:`<div id="exhistlist-${i}"></div>`}
+        ${!isRec&&hist.length>1?`<div id="exhistlist-${i}">${hist.slice(0,3).map(e=>`<div class="hist-row"><span class="hist-date">${e.fecha}</span><span class="hist-w">${e.peso_kg} ${unitLabel}</span></div>`).join('')}</div>`:`<div id="exhistlist-${i}"></div>`}
       </div>`;
     el.appendChild(acc);
   });
@@ -597,9 +602,10 @@ let modalEx=null;
 function openModal(ex, allowDateEdit=false){
   modalEx=ex;
   const isRec=ex.type==='record';
+  const isReps=ex.unit==='reps';
   document.getElementById('modalExName').textContent=ex.name;
   document.getElementById('modalExSeries').textContent=ex.isBW?'Peso corporal':isRec?'Récord de repeticiones — lo que te dé 😤':`${ex.repsMin}-${ex.repsMax} reps`;
-  document.getElementById('weightUnit').textContent=isRec?'reps':'kg';
+  document.getElementById('weightUnit').textContent=isRec?'reps':isReps?'reps':'kg';
   // date input — show only from historial
   const dateRow=document.getElementById('modalDateRow');
   const dateInput=document.getElementById('modalDate');
@@ -758,35 +764,36 @@ async function buildHistPage(){
 
   let html='';
 
-  // ── Peso corporal ──
+  // ── Peso corporal ── siempre visible
   const bwRows=getPesoHistorial(histP,'Peso corporal');
-  if(bwRows.length){
-    const latest=bwRows[0];
-    html+=`
-      <div class="bw-hist-block" id="bwhistblock">
-        <div class="bw-hist-header" onclick="document.getElementById('bwhistblock').classList.toggle('open')">
-          <div style="display:flex;align-items:center;gap:10px">
-            <span style="font-size:1.3rem">⚖️</span>
-            <div>
-              <div style="font-size:.9rem;font-weight:800">Peso corporal</div>
-              <div style="font-size:.62rem;color:#9ca3af;margin-top:2px">${bwRows.length} registros</div>
-            </div>
-          </div>
-          <div style="display:flex;align-items:center;gap:8px">
-            <span style="font-size:.88rem;font-weight:800;color:#c084fc">${latest.peso_kg} kg</span>
-            <span class="bw-hist-arrow">▼</span>
+  const bwCanAdd=histP===ME;
+  _histEx['bwhist']={name:'Peso corporal',isBW:true};
+  html+=`
+    <div class="bw-hist-block${bwRows.length?' open':''}" id="bwhistblock">
+      <div class="bw-hist-header" onclick="document.getElementById('bwhistblock').classList.toggle('open')">
+        <div style="display:flex;align-items:center;gap:10px">
+          <span style="font-size:1.3rem">⚖️</span>
+          <div>
+            <div style="font-size:.9rem;font-weight:800">Peso corporal</div>
+            <div style="font-size:.62rem;color:#9ca3af;margin-top:2px">${bwRows.length?bwRows.length+' registros':'sin datos'}</div>
           </div>
         </div>
-        <div class="bw-hist-body">
-          ${renderInlineChart([...bwRows].reverse(),'#c084fc','bwchart_'+histP)}
-          ${bwRows.map((r,i)=>{
-            const prev=bwRows[i+1];
-            const dh=deltaHtml(r.peso_kg,prev?.peso_kg,true);
-            return`<div class="hist-ex-row"><span style="color:var(--muted)">${r.fecha}</span><div style="display:flex;align-items:center;gap:6px">${dh}<span style="font-weight:700">${r.peso_kg} kg</span></div></div>`;
-          }).join('')}
+        <div style="display:flex;align-items:center;gap:8px">
+          ${bwCanAdd?`<button onclick="event.stopPropagation();openModal(_histEx['bwhist'],true)" style="background:var(--card2);border:1px dashed #c084fc;color:#c084fc;border-radius:6px;padding:3px 8px;font-size:.6rem;font-weight:700;cursor:pointer;font-family:'Inter',sans-serif">+ kg</button>`:''}
+          ${bwRows.length?`<span style="font-size:.88rem;font-weight:800;color:#c084fc">${bwRows[0].peso_kg} kg</span>`:''}
+          <span class="bw-hist-arrow">▼</span>
         </div>
-      </div>`;
-  }
+      </div>
+      <div class="bw-hist-body">
+        ${bwRows.length>=2?renderInlineChart([...bwRows].reverse(),'#c084fc','bwchart_'+histP):''}
+        ${bwRows.map((r,i)=>{
+          const prev=bwRows[i+1];
+          const dh=deltaHtml(r.peso_kg,prev?.peso_kg,true);
+          return`<div class="hist-ex-row"><span style="color:var(--muted)">${r.fecha}</span><div style="display:flex;align-items:center;gap:6px">${dh}<span style="font-weight:700">${r.peso_kg} kg</span></div></div>`;
+        }).join('')}
+        ${!bwRows.length?`<div style="color:var(--muted);font-size:.75rem;padding:4px 0">Sin registros todavía.</div>`:''}
+      </div>
+    </div>`;
 
   // ── Ejercicios agrupados por músculo ──
   let anyEx=false;
