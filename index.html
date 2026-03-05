@@ -785,15 +785,17 @@ async function buildHistPage(){
         allKeys.push({ex,key:ex.name});
       }
     });
+    // split into with/without data
     const withData=allKeys.filter(({ex,key})=>{
       if(ex.type==='record')return(cache.records||[]).some(rec=>rec.persona.toLowerCase()===histP.toLowerCase()&&rec.ejercicio===key);
       return getPesoHistorial(histP,key).length>0;
     });
-    if(!withData.length)return;
+    const noData=allKeys.filter(({ex,key})=>!withData.find(w=>w.key===key));
     anyEx=true;
     const gid=`hgroup-${gi}`;
+    // open if has data, closed if not
     html+=`
-      <div class="hist-group-block open" id="${gid}">
+      <div class="hist-group-block${withData.length?' open':''}" id="${gid}">
         <div class="hist-group-header" onclick="document.getElementById('${gid}').classList.toggle('open')">
           <div class="hist-group-title">
             <span style="font-size:1.2rem">${r.emoji}</span>
@@ -802,9 +804,15 @@ async function buildHistPage(){
               <div style="font-size:.9rem;font-weight:800">${r.muscle}</div>
             </div>
           </div>
-          <span class="hist-group-arrow">▼</span>
+          <div style="display:flex;align-items:center;gap:8px">
+            ${withData.length
+              ?`<span style="font-size:.62rem;color:var(--accent);font-weight:700">${withData.length} ejercicios</span>`
+              :`<span style="font-size:.62rem;color:var(--muted)">sin datos</span>`}
+            <span class="hist-group-arrow">▼</span>
+          </div>
         </div>
         <div class="hist-group-body">`;
+    // exercises with data first
     withData.forEach(({ex,key},ei)=>{
       const isRec=ex.type==='record';
       const pr=(cache.records||[]).find(rec=>rec.persona.toLowerCase()===histP.toLowerCase()&&rec.ejercicio===key);
@@ -831,6 +839,16 @@ async function buildHistPage(){
                   return chart+rows;
                 })()
             }
+          </div>
+        </div>`;
+    });
+    // exercises without data — greyed out, not expandable
+    noData.forEach(({key})=>{
+      html+=`
+        <div class="hist-ex-item" style="opacity:.3">
+          <div class="hist-ex-header" style="cursor:default">
+            <div class="hex-name">${key}</div>
+            <div style="font-size:.62rem;color:var(--muted)">sin datos</div>
           </div>
         </div>`;
     });
