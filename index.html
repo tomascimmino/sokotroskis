@@ -265,6 +265,10 @@ header{background:#0d0d0d;padding:8px 18px;border-bottom:1px solid var(--border)
       <input type="number" id="weightInput" placeholder="0" min="0" step="0.1"/>
       <span class="unit" id="weightUnit">kg</span>
     </div>
+    <div id="modalDateRow" style="margin-bottom:14px;display:none">
+      <div style="font-size:.6rem;letter-spacing:1px;text-transform:uppercase;color:var(--muted);font-weight:700;margin-bottom:6px">Fecha</div>
+      <input type="date" id="modalDate" style="width:100%;background:var(--card2);border:1.5px solid var(--border);border-radius:10px;padding:10px 14px;font-size:.9rem;font-weight:700;color:var(--text);font-family:'Inter',sans-serif;"/>
+    </div>
     <div id="modalHist"></div>
     <button class="btn-save" onclick="saveWeight()">Guardar</button>
     <button class="btn-cancel" onclick="closeModal()">Cancelar</button>
@@ -589,12 +593,23 @@ function selectVariant(i,base,v){
 
 // ── MODAL ─────────────────────────────────────────────────
 let modalEx=null;
-function openModal(ex){
+function openModal(ex, allowDateEdit=false){
   modalEx=ex;
   const isRec=ex.type==='record';
   document.getElementById('modalExName').textContent=ex.name;
-  document.getElementById('modalExSeries').textContent=ex.isBW?'Tu peso corporal de hoy':isRec?'Récord de repeticiones — lo que te dé 😤':`${ex.repsMin}-${ex.repsMax} reps`;
+  document.getElementById('modalExSeries').textContent=ex.isBW?'Peso corporal':isRec?'Récord de repeticiones — lo que te dé 😤':`${ex.repsMin}-${ex.repsMax} reps`;
   document.getElementById('weightUnit').textContent=isRec?'reps':'kg';
+  // date input — show only from historial
+  const dateRow=document.getElementById('modalDateRow');
+  const dateInput=document.getElementById('modalDate');
+  if(allowDateEdit&&!isRec){
+    dateRow.style.display='block';
+    dateInput.value=todayStr;
+    dateInput.max=todayStr;
+  } else {
+    dateRow.style.display='none';
+    dateInput.value=todayStr;
+  }
   document.getElementById('weightInput').value=isRec?((cache.records||[]).find(r=>r.persona.toLowerCase()===ME.toLowerCase()&&r.ejercicio===ex.name)?.valor||''):(getPesoHoy(ME,ex.name)||'');
   const hist=document.getElementById('modalHist');
   if(isRec){hist.innerHTML='';}
@@ -612,22 +627,22 @@ async function saveWeight(){
   const val=parseFloat(document.getElementById('weightInput').value);
   if(!val||isNaN(val)){closeModal();return;}
   const exCopy={...modalEx};
+  const fechaGuardar=document.getElementById('modalDate').value||todayStr;
   closeModal();
   const isRec=exCopy.type==='record';
   try{
     if(isRec){
-      const res=await api({action:'setRecord',persona:ME,ejercicio:exCopy.name,valor:val,fecha:todayStr});
+      const res=await api({action:'setRecord',persona:ME,ejercicio:exCopy.name,valor:val,fecha:fechaGuardar});
       if(res.nuevo_record){showToast('🏆 ¡Nuevo récord! '+val+' reps','ok');cache.records=null;await loadRecords();}
       else showToast('Récord actual: '+res.valor+' reps');
     }else{
-      await api({action:'setPeso',persona:ME,ejercicio:exCopy.name,peso_kg:val,fecha:todayStr,series:3,reps_min:exCopy.repsMin||0,reps_max:exCopy.repsMax||0});
+      await api({action:'setPeso',persona:ME,ejercicio:exCopy.name,peso_kg:val,fecha:fechaGuardar,series:3,reps_min:exCopy.repsMin||0,reps_max:exCopy.repsMax||0});
       if(!cache.pesos[ME])cache.pesos[ME]=[];
-      // replace same date+ejercicio in cache
-      cache.pesos[ME]=cache.pesos[ME].filter(r=>!(r.fecha===todayStr&&r.ejercicio===exCopy.name));
-      cache.pesos[ME].push({fecha:todayStr,persona:ME,ejercicio:exCopy.name,peso_kg:val});
-      showToast(exCopy.isBW?'⚖️ Peso guardado: '+val+' kg':'💾 Guardado: '+val+' kg','ok');
+      cache.pesos[ME]=cache.pesos[ME].filter(r=>!(r.fecha===fechaGuardar&&r.ejercicio===exCopy.name));
+      cache.pesos[ME].push({fecha:fechaGuardar,persona:ME,ejercicio:exCopy.name,peso_kg:val});
+      showToast('💾 '+val+' kg — '+fechaGuardar,'ok');
     }
-    if(exCopy.isBW){renderBWCardHoy();}else{buildDayExList();}
+    if(exCopy.isBW){renderBWCardHoy();}else if(fechaGuardar===todayStr){buildDayExList();}else{buildHistPage();}
   }catch(e){showToast('Error: '+e.message,'err');console.error(e);}
 }
 document.getElementById('modalOverlay').addEventListener('click',e=>{
@@ -819,11 +834,16 @@ async function buildHistPage(){
       const entries=isRec?[]:getPesoHistorial(histP,key);
       const maxW=isRec?pr.valor:Math.max(...entries.map(e=>+e.peso_kg));
       const eid=`${gid}-ex-${ei}`;
+      const exObj=allKeys.find(k=>k.key===key)?.ex||{};
+      const canAdd=histP===ME&&!isRec;
       html+=`
         <div class="hist-ex-item">
           <div class="hist-ex-header" onclick="var b=document.getElementById('${eid}');b.classList.toggle('open')">
             <div class="hex-name">${key}</div>
-            <div class="hex-pr">${isRec?'🏆 '+maxW+' reps':'PR: '+maxW+' kg'}</div>
+            <div style="display:flex;align-items:center;gap:6px">
+              ${canAdd?`<button onclick="event.stopPropagation();openModal(${JSON.stringify({...exObj,name:key})},true)" style="background:var(--card2);border:1px dashed var(--accent);color:var(--accent);border-radius:6px;padding:3px 8px;font-size:.6rem;font-weight:700;cursor:pointer;font-family:'Inter',sans-serif">+ kg</button>`:''}
+              <div class="hex-pr">${isRec?'🏆 '+maxW+' reps':'PR: '+maxW+' kg'}</div>
+            </div>
           </div>
           <div class="hist-ex-body" id="${eid}">
             ${isRec
@@ -842,13 +862,17 @@ async function buildHistPage(){
           </div>
         </div>`;
     });
-    // exercises without data — greyed out, not expandable
-    noData.forEach(({key})=>{
+    // exercises without data — show with add button if it's me
+    noData.forEach(({ex,key})=>{
+      const canAdd=histP===ME;
       html+=`
-        <div class="hist-ex-item" style="opacity:.3">
+        <div class="hist-ex-item" style="opacity:${canAdd?.6:.3}">
           <div class="hist-ex-header" style="cursor:default">
             <div class="hex-name">${key}</div>
-            <div style="font-size:.62rem;color:var(--muted)">sin datos</div>
+            <div style="display:flex;align-items:center;gap:6px">
+              ${canAdd?`<button onclick="openModal(${JSON.stringify({...ex,name:key})},true)" style="background:var(--card2);border:1px dashed var(--accent);color:var(--accent);border-radius:6px;padding:3px 8px;font-size:.6rem;font-weight:700;cursor:pointer;font-family:'Inter',sans-serif">+ kg</button>`:''}
+              <div style="font-size:.62rem;color:var(--muted)">sin datos</div>
+            </div>
           </div>
         </div>`;
     });
