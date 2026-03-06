@@ -882,7 +882,7 @@ async function buildHistTodos(content){
         <div id="${gid}" style="display:${dayActive?'block':'none'};padding:8px 12px;display:flex;flex-wrap:wrap;gap:6px;padding:8px 12px">
           ${groups[day].map(({key,label})=>{
             const active=key===histTodosEx;
-            const safeKey=key.replace(/\/g,'\\').replace(/'/g,"\'");
+            const safeKey=key.replace(/'/g,"\\'");
             return`<button onclick="histTodosEx='${safeKey}';document.querySelectorAll('.tdex-btn').forEach(b=>b.style.background='var(--card2)');this.style.background='var(--accent)';renderMultiChart('${safeKey}')" class="tdex-btn" style="background:${active?'var(--accent)':'var(--card2)'};color:${active?'#000':'var(--muted)'};border:1px solid ${active?'var(--accent)':'var(--border)'};border-radius:8px;padding:5px 10px;font-size:.65rem;font-weight:700;cursor:pointer;font-family:'Inter',sans-serif">${label}</button>`;
           }).join('')}
         </div>
