@@ -802,104 +802,90 @@ function getAllExerciseKeys(){
   return keys;
 }
 
-function renderMultiChart(exKey, content){
+function renderMultiChart(exKey){
   const allData={};
   PERSONS.forEach(p=>{
     const rows=getPesoHistorial(p,exKey);
     if(rows.length)allData[p]=[...rows].reverse();
   });
   const persons=Object.keys(allData);
+  const chartEl=document.getElementById('todosChart');
+  if(!chartEl)return;
   if(!persons.length){
-    content.innerHTML='<div style="text-align:center;padding:40px;color:var(--muted)">Sin datos para este ejercicio todavía.</div>';
+    chartEl.innerHTML='<div style="text-align:center;padding:30px;color:var(--muted);font-size:.8rem">Sin datos para este ejercicio todavía.</div>';
     return;
   }
-
-  // build svg chart with multiple lines
-  const W=320,H=100,PL=32,PR=8,PT=10,PB=20;
+  const W=320,H=110,PL=32,PR=8,PT=10,PB=20;
   const cW=W-PL-PR,cH=H-PT-PB;
-
-  // collect all dates sorted
   const allDates=[...new Set(persons.flatMap(p=>allData[p].map(d=>d.fecha)))].sort();
   const allWeights=persons.flatMap(p=>allData[p].map(d=>+d.peso_kg));
   const mn=Math.min(...allWeights)-2,mx=Math.max(...allWeights)+2;
   const xS=i=>allDates.length<2?cW/2:(i/(allDates.length-1))*cW;
   const yS=w=>mx===mn?cH/2:cH-((w-mn)/(mx-mn))*cH;
-
   const lines=persons.map(p=>{
     const color=COLORS[p];
-    const pts=allData[p].map(d=>({
-      x:xS(allDates.indexOf(d.fecha))+PL,
-      y:yS(+d.peso_kg)+PT,
-      d
-    }));
-    const pathD=pts.map((p,i)=>i===0?`M${p.x},${p.y}`:`L${p.x},${p.y}`).join(' ');
+    const pts=allData[p].map(d=>({x:xS(allDates.indexOf(d.fecha))+PL,y:yS(+d.peso_kg)+PT}));
+    const pathD=pts.map((pt,i)=>i===0?`M${pt.x},${pt.y}`:`L${pt.x},${pt.y}`).join(' ');
     const dots=pts.map((pt,i)=>`<circle cx="${pt.x}" cy="${pt.y}" r="${i===pts.length-1?3.5:2.5}" fill="${i===pts.length-1?color:'#111'}" stroke="${color}" stroke-width="1.2"/>`).join('');
     return`<path d="${pathD}" fill="none" stroke="${color}" stroke-width="1.8" stroke-linejoin="round" stroke-linecap="round" opacity="0.9"/>${dots}`;
   }).join('');
-
-  // y axis labels
   const yLabels=[mn+2,mx-2].map(w=>`<text x="${PL-4}" y="${yS(w)+PT+3}" text-anchor="end" font-size="7" fill="#555">${w.toFixed(0)}</text>`).join('');
-  // x axis: first and last date
   const xLabels=allDates.length>=2?`<text x="${PL}" y="${H-2}" text-anchor="middle" font-size="7" fill="#555">${allDates[0].slice(5)}</text><text x="${W-PR}" y="${H-2}" text-anchor="end" font-size="7" fill="#555">${allDates[allDates.length-1].slice(5)}</text>`:'';
-
-  const gid='grad_multi_'+exKey.replace(/[^a-z0-9]/gi,'_');
-  const svgHtml=`<svg viewBox="0 0 ${W} ${H}" style="width:100%;overflow:visible;margin:12px 0 6px">${yLabels}${xLabels}${lines}</svg>`;
-
-  // legend
-  const legend=persons.map(p=>{
+  const svgHtml=`<svg viewBox="0 0 ${W} ${H}" style="width:100%;overflow:visible;margin:8px 0 4px">${yLabels}${xLabels}${lines}</svg>`;
+  // legend sorted by last value desc
+  const sorted=[...persons].sort((a,b)=>+allData[b][allData[b].length-1].peso_kg - +allData[a][allData[a].length-1].peso_kg);
+  const legend=sorted.map(p=>{
     const last=allData[p][allData[p].length-1];
-    return`<div style="display:flex;align-items:center;gap:6px;padding:5px 0;border-bottom:1px solid var(--border)">
-      <div style="width:10px;height:10px;border-radius:50%;background:${COLORS[p]};flex-shrink:0"></div>
+    return`<div style="display:flex;align-items:center;gap:8px;padding:5px 0;border-bottom:1px solid var(--border)">
+      <div style="width:8px;height:8px;border-radius:50%;background:${COLORS[p]};flex-shrink:0"></div>
       <span style="font-size:.78rem;font-weight:700;flex:1">${p}</span>
-      <span style="font-size:.75rem;color:${COLORS[p]};font-weight:800">${last.peso_kg} kg</span>
-      <span style="font-size:.62rem;color:var(--muted)">${last.fecha}</span>
+      <span style="font-size:.78rem;color:${COLORS[p]};font-weight:800">${last.peso_kg} kg</span>
     </div>`;
   }).join('');
-
-  content.innerHTML=`
-    <div style="background:var(--card);border:1px solid var(--border);border-radius:14px;padding:14px 16px;margin-top:8px">
-      <div style="font-size:.6rem;letter-spacing:1.5px;text-transform:uppercase;color:var(--accent);font-weight:700;margin-bottom:10px">${exKey}</div>
-      ${svgHtml}
-      ${legend}
-    </div>`;
+  chartEl.innerHTML=`
+    <div style="font-size:.62rem;letter-spacing:1.5px;text-transform:uppercase;color:var(--accent);font-weight:700;margin-bottom:6px">${exKey}</div>
+    ${svgHtml}${legend}`;
 }
 
 async function buildHistTodos(content){
-  // load all persons
   content.innerHTML='<div class="loading"><span class="spin">⏳</span>Cargando todos...</div>';
   await Promise.all(PERSONS.map(p=>loadPesos(p)));
-
   const allKeys=getAllExerciseKeys();
-
-  // build exercise selector
-  // group by day
-  const groups={};
-  allKeys.forEach(({key,label,day})=>{
-    if(!groups[day])groups[day]=[];
-    groups[day].push({key,label});
-  });
-
   if(!histTodosEx)histTodosEx=allKeys[0]?.key||null;
 
-  let selHtml='<div style="margin-bottom:12px">';
-  GYM_DAYS.forEach(day=>{
-    const r=ROUTINE[day];
-    if(!groups[day])return;
-    selHtml+=`<div style="font-size:.58rem;text-transform:uppercase;letter-spacing:1.5px;color:var(--accent);font-weight:700;margin:10px 0 6px">${r.emoji} ${r.muscle}</div>`;
-    selHtml+='<div style="display:flex;flex-wrap:wrap;gap:6px">';
-    groups[day].forEach(({key,label})=>{
-      const active=key===histTodosEx;
-      selHtml+=`<button onclick="histTodosEx='${key.replace(/'/g,"\'")}';buildHistTodos(document.getElementById('histContent'))" style="background:${active?'var(--accent)':'var(--card2)'};color:${active?'#000':'var(--muted)'};border:1px solid ${active?'var(--accent)':'var(--border)'};border-radius:8px;padding:5px 10px;font-size:.65rem;font-weight:700;cursor:pointer;font-family:'Inter',sans-serif">${label}</button>`;
-    });
-    selHtml+='</div>';
+  // selector: collapsible groups
+  const groups={};
+  allKeys.forEach(({key,label,day})=>{if(!groups[day])groups[day]=[];groups[day].push({key,label});});
+
+  let selHtml=`<div style="background:var(--card);border:1px solid var(--border);border-radius:14px;overflow:hidden;margin-bottom:12px">`;
+  GYM_DAYS.forEach((day,gi)=>{
+    const r=ROUTINE[day];if(!groups[day])return;
+    const dayActive=groups[day].some(({key})=>key===histTodosEx);
+    const gid='tdg'+gi;
+    selHtml+=`
+      <div style="border-bottom:1px solid var(--border)">
+        <div onclick="var b=document.getElementById('${gid}');b.style.display=b.style.display==='none'?'block':'none'" style="padding:10px 14px;display:flex;align-items:center;justify-content:space-between;cursor:pointer;background:${dayActive?'#0c1a14':'#0d0d0d'}">
+          <span style="font-size:.78rem;font-weight:700;color:${dayActive?'var(--accent)':'var(--text)'}">${r.emoji} ${r.muscle}</span>
+          <span style="font-size:.6rem;color:var(--muted)">▼</span>
+        </div>
+        <div id="${gid}" style="display:${dayActive?'block':'none'};padding:8px 12px;display:flex;flex-wrap:wrap;gap:6px;padding:8px 12px">
+          ${groups[day].map(({key,label})=>{
+            const active=key===histTodosEx;
+            const safeKey=key.replace(/\/g,'\\').replace(/'/g,"\'");
+            return`<button onclick="histTodosEx='${safeKey}';document.querySelectorAll('.tdex-btn').forEach(b=>b.style.background='var(--card2)');this.style.background='var(--accent)';renderMultiChart('${safeKey}')" class="tdex-btn" style="background:${active?'var(--accent)':'var(--card2)'};color:${active?'#000':'var(--muted)'};border:1px solid ${active?'var(--accent)':'var(--border)'};border-radius:8px;padding:5px 10px;font-size:.65rem;font-weight:700;cursor:pointer;font-family:'Inter',sans-serif">${label}</button>`;
+          }).join('')}
+        </div>
+      </div>`;
   });
-  selHtml+='</div>';
+  selHtml+=`</div>`;
 
-  const chartDiv=document.createElement('div');
-  content.innerHTML=selHtml;
-  content.appendChild(chartDiv);
+  content.innerHTML=`
+    <div style="background:var(--card);border:1px solid var(--border);border-radius:14px;padding:14px 16px;margin-bottom:10px" id="todosChart">
+      <div style="color:var(--muted);font-size:.78rem">Seleccioná un ejercicio abajo</div>
+    </div>
+    ${selHtml}`;
 
-  if(histTodosEx)renderMultiChart(histTodosEx,chartDiv);
+  if(histTodosEx)renderMultiChart(histTodosEx);
 }
 
 let histMode='single'; // 'single' | 'todos'
