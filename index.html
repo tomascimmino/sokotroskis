@@ -869,8 +869,8 @@ async function buildHistTodos(content){
       <div style="display:flex;gap:8px">
         <input id="exSearch" type="text" placeholder="🔍  Buscar ejercicio..." autocomplete="off"
           style="flex:1;background:var(--card2);border:1.5px solid var(--border);border-radius:10px;padding:10px 14px;font-size:.82rem;color:var(--text);font-family:'Inter',sans-serif;outline:none"
-          oninput="filterExSearch()" onfocus="this.style.borderColor='var(--accent)'" onblur="this.style.borderColor='var(--border)'"/>
-        <button onclick="filterExSearch(true)" style="background:var(--accent);color:#000;border:none;border-radius:10px;padding:0 16px;font-size:.78rem;font-weight:800;cursor:pointer;font-family:'Inter',sans-serif;white-space:nowrap">Ver todos</button>
+          oninput="filterExSearch()" onfocus="this.style.borderColor='var(--accent)';filterExSearch()" onblur="this.style.borderColor='var(--border)'"/>
+        <button onclick="document.getElementById('exSearch').value='';filterExSearch();document.getElementById('exSearch').focus()" style="background:var(--card2);color:var(--muted);border:1.5px solid var(--border);border-radius:10px;padding:0 14px;font-size:1rem;cursor:pointer;font-family:'Inter',sans-serif;line-height:1">✕</button>
       </div>
       <div id="exSearchResults" style="display:none;background:var(--card);border:1px solid var(--border);border-radius:10px;margin-top:4px;overflow:hidden;max-height:260px;overflow-y:auto"></div>
     </div>
@@ -880,7 +880,7 @@ async function buildHistTodos(content){
   window._allKeysSorted=allKeysSorted;
   if(histTodosEx)renderMultiChart(histTodosEx);
 }
-function filterExSearch(forceShow=false){
+function filterExSearch(){
   const q=document.getElementById('exSearch').value.toLowerCase().trim();
   const res=document.getElementById('exSearchResults');
   const filtered=q?(window._allKeysSorted||[]).filter(({label})=>label.toLowerCase().includes(q)):(window._allKeysSorted||[]);
