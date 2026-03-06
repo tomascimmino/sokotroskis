@@ -282,6 +282,23 @@ const PERSONS=['Fede','Toti','Matu','Pepo','Jordan'];
 const PI={Fede:'F',Toti:'T',Matu:'M',Pepo:'P',Jordan:'J'};
 const COLORS={Fede:'#00c896',Toti:'#5b9cf6',Matu:'#a78bfa',Pepo:'#f59e0b',Jordan:'#f472b6'};
 const VARIANTS={'Press inclinado':['Banco','Multipower','Mancuernas'],'Press banca':['Banco','Multipower']};
+// ✏️ EDITAR PERFILES AQUÍ
+const PROFILES={
+  Fede: {objetivo:'bajar', meta:'Bajar grasa y definir'},
+  Toti: {objetivo:'subir', meta:'Ganar masa muscular'},
+  Matu: {objetivo:'mantener', meta:'Definirse y mantener'},
+  Pepo: {objetivo:'subir', meta:'Ganar masa muscular'},
+  Jordan:{objetivo:'subir', meta:'Ganar masa muscular'},
+};
+// Ejercicios para calcular fuerza relativa (peso_levantado / peso_corporal)
+const STRENGTH_EX=['Press banca - Multipower','Press banca - Banco','Press militar','Curl con mancuernas','Extensión trícep polea ↓','Jalón al pecho abierto'];
+const STRENGTH_COMMENTS=[
+  '🏆 Este tipo levanta pesos remotamente inalcanzables para los bobis',
+  '💪 Bestia del grupo, se nota que entrena en serio',
+  '👏 Más fuerte de lo que aparenta, respeto',
+  '😅 Promedio del grupo, hay que exigirse más',
+  '🐣 Cero proporcionalidad. Estás para arrancar de cero, campeon',
+];
 const ROUTINE={
   Lunes:{emoji:'🦵',muscle:'Piernas',exercises:[
     {name:'Extensión de cuádricep',repsMin:12,repsMax:15},
@@ -325,6 +342,19 @@ const DAY_NAMES=['Domingo','Lunes','Martes','Miercoles','Jueves','Viernes','Saba
 const GYM_DAYS=['Lunes','Miercoles','Jueves','Viernes'];
 
 let cache={asistencia:null,pesos:{},records:null};
+function getAltura(p){return parseFloat(localStorage.getItem('altura_'+p))||null;}
+function setAltura(p,v){localStorage.setItem('altura_'+p,v);}
+function getStrengthRatio(p){
+  // average of (weight_lifted / body_weight) across STRENGTH_EX
+  const bw=+(getPesoHistorial(p,'Peso corporal')[0]?.peso_kg||0);
+  if(!bw)return null;
+  let sum=0,count=0;
+  STRENGTH_EX.forEach(ex=>{
+    const h=getPesoHistorial(p,ex);
+    if(h.length){sum+=(+h[0].peso_kg/bw);count++;}
+  });
+  return count?+(sum/count).toFixed(3):null;
+}
 let ME=localStorage.getItem('sokoUser')||null;
 const today=new Date();
 const todayDay=DAY_NAMES[today.getDay()];
@@ -519,6 +549,11 @@ function renderAttendance(){
 function renderBWCardHoy(){
   const el=document.getElementById('bwCardHoy');if(!el)return;
   const w=getPesoHoy(ME,'Peso corporal');
+  const prof=PROFILES[ME]||{};
+  const altura=getAltura(ME);
+  const objColor=prof.objetivo==='bajar'?'#5b9cf6':prof.objetivo==='mantener'?'#f59e0b':'#2ecc71';
+  const alturaHtml=altura?`<div style="font-size:.6rem;color:var(--muted);margin-top:2px">${altura} cm · <span style="color:${objColor}">${prof.meta||''}</span></div>`
+    :`<div style="font-size:.6rem;color:var(--accent);margin-top:2px;cursor:pointer" onclick="promptAltura()">+ Agregar altura</div>`;
   el.innerHTML=`
     <div class="bw-card">
       <div class="bw-left">
@@ -526,10 +561,15 @@ function renderBWCardHoy(){
         <div>
           <div class="bw-label">Peso corporal</div>
           <div class="bw-value${w?'':' empty'}">${w?w+' kg':'Sin registrar hoy'}</div>
+          ${alturaHtml}
         </div>
       </div>
       <button class="bw-btn${w?'':' empty'}" onclick="openModal({name:'Peso corporal',isBW:true})">${w?'Editar':'+ Registrar'}</button>
     </div>`;
+}
+function promptAltura(){
+  const v=prompt('¿Cuánto medís? (en cm, ej: 178)');
+  if(v&&!isNaN(+v)&&+v>100&&+v<230){setAltura(ME,+v);renderBWCardHoy();showToast('📏 Altura guardada: '+v+' cm');}
 }
 
 // ── EJERCICIOS DEL DÍA ────────────────────────────────────
@@ -786,12 +826,18 @@ async function buildHistPage(){
       </div>
       <div class="bw-hist-body">
         ${bwRows.length>=2?renderInlineChart([...bwRows].reverse(),'#c084fc','bwchart_'+histP):''}
-        ${bwRows.map((r,i)=>{
-          const prev=bwRows[i+1];
-          const dh=deltaHtml(r.peso_kg,prev?.peso_kg,true);
-          return`<div class="hist-ex-row"><span style="color:var(--muted)">${r.fecha}</span><div style="display:flex;align-items:center;gap:6px">${dh}<span style="font-weight:700">${r.peso_kg} kg</span></div></div>`;
-        }).join('')}
-        ${!bwRows.length?`<div style="color:var(--muted);font-size:.75rem;padding:4px 0">Sin registros todavía.</div>`:''}
+        ${(()=>{
+          const prof=PROFILES[histP]||{};
+          const invert=prof.objetivo==='bajar'||prof.objetivo==='mantener';
+          const objColor=prof.objetivo==='bajar'?'#5b9cf6':prof.objetivo==='mantener'?'#f59e0b':'#2ecc71';
+          const objHtml=prof.meta?`<div style="font-size:.62rem;color:${objColor};margin-bottom:8px">Objetivo: ${prof.meta}</div>`:'';
+          const rows=bwRows.map((r,i)=>{
+            const prev=bwRows[i+1];
+            const dh=deltaHtml(r.peso_kg,prev?.peso_kg,invert);
+            return`<div class="hist-ex-row"><span style="color:var(--muted)">${r.fecha}</span><div style="display:flex;align-items:center;gap:6px">${dh}<span style="font-weight:700">${r.peso_kg} kg</span></div></div>`;
+          }).join('');
+          return objHtml+rows||'<div style="color:var(--muted);font-size:.75rem;padding:4px 0">Sin registros todavía.</div>';
+        })()}
       </div>
     </div>`;
 
@@ -905,10 +951,12 @@ async function buildStatsPage(){
     if(Array.isArray(data))data.forEach(row=>PERSONS.forEach(p=>{if(row[p.toLowerCase()]===1||row[p.toLowerCase()]==='1')cnt[p]++;}));
     const totalDays=Array.isArray(data)?data.length:0;
     const avg=totalDays?(Object.values(cnt).reduce((a,b)=>a+b,0)/totalDays).toFixed(1):0;
+    // días sin nadie = días donde nadie marcó asistencia
+    const sinNadie=Array.isArray(data)?data.filter(row=>PERSONS.every(p=>!(row[p.toLowerCase()]===1||row[p.toLowerCase()]==='1'))).length:0;
     document.getElementById('statsGrid').innerHTML=`
       <div class="stat-card"><div class="stat-n">${totalDays}</div><div class="stat-l">Días este mes</div></div>
-      <div class="stat-card"><div class="stat-n">${avg}</div><div class="stat-l">Promedio de asistentes</div></div>
-      <div class="stat-card"><div class="stat-n">${Math.max(0,...Object.values(cnt))}</div><div class="stat-l">Máx sesiones</div></div>`;
+      <div class="stat-card"><div class="stat-n">${avg}</div><div class="stat-l">Promedio asistentes</div></div>
+      <div class="stat-card"><div class="stat-n">${sinNadie}</div><div class="stat-l">Días sin nadie</div></div>`;
     const as=document.getElementById('attendStats');as.innerHTML='';
     [...PERSONS].sort((a,b)=>cnt[b]-cnt[a]).forEach(p=>{
       const pct=totalDays?Math.round(cnt[p]/totalDays*100):0;
@@ -920,6 +968,28 @@ async function buildStatsPage(){
         <div style="font-size:.88rem;font-weight:800;color:${COLORS[p]}">${cnt[p]} días</div>
       </div>`;
     });
+    // ── Ranking fuerza relativa ──
+    // Need pesos loaded for all persons
+    await Promise.all(PERSONS.map(p=>loadPesos(p)));
+    const ratios=PERSONS.map(p=>({p,r:getStrengthRatio(p)})).filter(x=>x.r!==null).sort((a,b)=>b.r-a.r);
+    if(ratios.length){
+      let rhtml='<div class="section-title" style="margin-top:20px">💪 Fuerza relativa</div>';
+      rhtml+='<div style="font-size:.62rem;color:var(--muted);margin-bottom:10px">Promedio de peso levantado ÷ peso corporal</div>';
+      ratios.forEach(({p,r},i)=>{
+        const comment=i<STRENGTH_COMMENTS.length?STRENGTH_COMMENTS[i]:'';
+        const isMe=p===ME;
+        rhtml+=`<div style="background:var(--card);border:1px solid ${isMe?COLORS[p]:' var(--border)'};border-radius:12px;padding:12px 14px;margin-bottom:8px">
+          <div style="display:flex;align-items:center;gap:12px;margin-bottom:${comment?'8':'0'}px">
+            <div style="width:26px;text-align:center;font-size:.75rem;font-weight:900;color:var(--muted)">${i+1}°</div>
+            <div style="width:34px;height:34px;border-radius:50%;background:#1e1e1e;display:flex;align-items:center;justify-content:center;font-weight:900;color:${COLORS[p]}">${PI[p]}</div>
+            <div style="flex:1"><div style="font-size:.83rem;font-weight:700">${p}${isMe?' ●':''}</div></div>
+            <div style="font-size:.95rem;font-weight:900;color:${COLORS[p]}">${r.toFixed(2)}x</div>
+          </div>
+          ${comment?`<div style="font-size:.68rem;color:var(--muted);padding-left:72px;line-height:1.4">${comment}</div>`:''}
+        </div>`;
+      });
+      as.innerHTML+=rhtml;
+    }
   }catch(e){document.getElementById('statsGrid').innerHTML='<div style="color:var(--muted);grid-column:1/-1;text-align:center;padding:20px">Error</div>';}
 }
 
