@@ -284,9 +284,9 @@ const COLORS={Fede:'#00c896',Toti:'#5b9cf6',Matu:'#a78bfa',Pepo:'#f59e0b',Jordan
 const VARIANTS={'Press inclinado':['Banco','Multipower','Mancuernas'],'Press banca':['Banco','Multipower']};
 // ✏️ EDITAR PERFILES AQUÍ
 const PROFILES={
-  Fede: {objetivo:'bajar', meta:'Bajar y definir'},
+  Fede: {objetivo:'bajar', meta:'Bajar grasa y definir'},
   Toti: {objetivo:'subir', meta:'Ganar masa muscular'},
-  Matu: {objetivo:'mantener', meta:'Mantener y definir'},
+  Matu: {objetivo:'mantener', meta:'Definirse y mantener'},
   Pepo: {objetivo:'subir', meta:'Ganar masa muscular'},
   Jordan:{objetivo:'subir', meta:'Ganar masa muscular'},
 };
@@ -296,8 +296,8 @@ const STRENGTH_COMMENTS=[
   '🏆 Este tipo levanta pesos remotamente inalcanzables para los bobis',
   '💪 Bestia del grupo, se nota que entrena en serio',
   '👏 Más fuerte de lo que aparenta, respeto',
-  '😅 Va muy bien, tiene margen para seguir creciendo',
-  '🔋 Recién arranca, hay potencial',
+  '😅 Promedio del grupo, hay que exigirse más',
+  '🐣 Cero proporcionalidad. Estás para arrancar de cero, campeon',
 ];
 const ROUTINE={
   Lunes:{emoji:'🦵',muscle:'Piernas',exercises:[
@@ -787,18 +787,149 @@ function renderInlineChart(data,color,uid){
   <\/script>`;
 }
 
+// ── HISTORIAL TODOS ───────────────────────────────────────
+function getAllExerciseKeys(){
+  const keys=[];
+  GYM_DAYS.forEach(day=>{
+    ROUTINE[day].exercises.forEach(ex=>{
+      if(VARIANTS[ex.name]){
+        VARIANTS[ex.name].forEach(v=>keys.push({label:ex.name+' - '+v,key:ex.name+' - '+v,day,ex}));
+      } else {
+        keys.push({label:ex.name,key:ex.name,day,ex});
+      }
+    });
+  });
+  return keys;
+}
+
+function renderMultiChart(exKey, content){
+  const allData={};
+  PERSONS.forEach(p=>{
+    const rows=getPesoHistorial(p,exKey);
+    if(rows.length)allData[p]=[...rows].reverse();
+  });
+  const persons=Object.keys(allData);
+  if(!persons.length){
+    content.innerHTML='<div style="text-align:center;padding:40px;color:var(--muted)">Sin datos para este ejercicio todavía.</div>';
+    return;
+  }
+
+  // build svg chart with multiple lines
+  const W=320,H=100,PL=32,PR=8,PT=10,PB=20;
+  const cW=W-PL-PR,cH=H-PT-PB;
+
+  // collect all dates sorted
+  const allDates=[...new Set(persons.flatMap(p=>allData[p].map(d=>d.fecha)))].sort();
+  const allWeights=persons.flatMap(p=>allData[p].map(d=>+d.peso_kg));
+  const mn=Math.min(...allWeights)-2,mx=Math.max(...allWeights)+2;
+  const xS=i=>allDates.length<2?cW/2:(i/(allDates.length-1))*cW;
+  const yS=w=>mx===mn?cH/2:cH-((w-mn)/(mx-mn))*cH;
+
+  const lines=persons.map(p=>{
+    const color=COLORS[p];
+    const pts=allData[p].map(d=>({
+      x:xS(allDates.indexOf(d.fecha))+PL,
+      y:yS(+d.peso_kg)+PT,
+      d
+    }));
+    const pathD=pts.map((p,i)=>i===0?`M${p.x},${p.y}`:`L${p.x},${p.y}`).join(' ');
+    const dots=pts.map((pt,i)=>`<circle cx="${pt.x}" cy="${pt.y}" r="${i===pts.length-1?3.5:2.5}" fill="${i===pts.length-1?color:'#111'}" stroke="${color}" stroke-width="1.2"/>`).join('');
+    return`<path d="${pathD}" fill="none" stroke="${color}" stroke-width="1.8" stroke-linejoin="round" stroke-linecap="round" opacity="0.9"/>${dots}`;
+  }).join('');
+
+  // y axis labels
+  const yLabels=[mn+2,mx-2].map(w=>`<text x="${PL-4}" y="${yS(w)+PT+3}" text-anchor="end" font-size="7" fill="#555">${w.toFixed(0)}</text>`).join('');
+  // x axis: first and last date
+  const xLabels=allDates.length>=2?`<text x="${PL}" y="${H-2}" text-anchor="middle" font-size="7" fill="#555">${allDates[0].slice(5)}</text><text x="${W-PR}" y="${H-2}" text-anchor="end" font-size="7" fill="#555">${allDates[allDates.length-1].slice(5)}</text>`:'';
+
+  const gid='grad_multi_'+exKey.replace(/[^a-z0-9]/gi,'_');
+  const svgHtml=`<svg viewBox="0 0 ${W} ${H}" style="width:100%;overflow:visible;margin:12px 0 6px">${yLabels}${xLabels}${lines}</svg>`;
+
+  // legend
+  const legend=persons.map(p=>{
+    const last=allData[p][allData[p].length-1];
+    return`<div style="display:flex;align-items:center;gap:6px;padding:5px 0;border-bottom:1px solid var(--border)">
+      <div style="width:10px;height:10px;border-radius:50%;background:${COLORS[p]};flex-shrink:0"></div>
+      <span style="font-size:.78rem;font-weight:700;flex:1">${p}</span>
+      <span style="font-size:.75rem;color:${COLORS[p]};font-weight:800">${last.peso_kg} kg</span>
+      <span style="font-size:.62rem;color:var(--muted)">${last.fecha}</span>
+    </div>`;
+  }).join('');
+
+  content.innerHTML=`
+    <div style="background:var(--card);border:1px solid var(--border);border-radius:14px;padding:14px 16px;margin-top:8px">
+      <div style="font-size:.6rem;letter-spacing:1.5px;text-transform:uppercase;color:var(--accent);font-weight:700;margin-bottom:10px">${exKey}</div>
+      ${svgHtml}
+      ${legend}
+    </div>`;
+}
+
+async function buildHistTodos(content){
+  // load all persons
+  content.innerHTML='<div class="loading"><span class="spin">⏳</span>Cargando todos...</div>';
+  await Promise.all(PERSONS.map(p=>loadPesos(p)));
+
+  const allKeys=getAllExerciseKeys();
+
+  // build exercise selector
+  // group by day
+  const groups={};
+  allKeys.forEach(({key,label,day})=>{
+    if(!groups[day])groups[day]=[];
+    groups[day].push({key,label});
+  });
+
+  if(!histTodosEx)histTodosEx=allKeys[0]?.key||null;
+
+  let selHtml='<div style="margin-bottom:12px">';
+  GYM_DAYS.forEach(day=>{
+    const r=ROUTINE[day];
+    if(!groups[day])return;
+    selHtml+=`<div style="font-size:.58rem;text-transform:uppercase;letter-spacing:1.5px;color:var(--accent);font-weight:700;margin:10px 0 6px">${r.emoji} ${r.muscle}</div>`;
+    selHtml+='<div style="display:flex;flex-wrap:wrap;gap:6px">';
+    groups[day].forEach(({key,label})=>{
+      const active=key===histTodosEx;
+      selHtml+=`<button onclick="histTodosEx='${key.replace(/'/g,"\'")}';buildHistTodos(document.getElementById('histContent'))" style="background:${active?'var(--accent)':'var(--card2)'};color:${active?'#000':'var(--muted)'};border:1px solid ${active?'var(--accent)':'var(--border)'};border-radius:8px;padding:5px 10px;font-size:.65rem;font-weight:700;cursor:pointer;font-family:'Inter',sans-serif">${label}</button>`;
+    });
+    selHtml+='</div>';
+  });
+  selHtml+='</div>';
+
+  const chartDiv=document.createElement('div');
+  content.innerHTML=selHtml;
+  content.appendChild(chartDiv);
+
+  if(histTodosEx)renderMultiChart(histTodosEx,chartDiv);
+}
+
+let histMode='single'; // 'single' | 'todos'
+let histTodosEx=null;   // selected exercise in todos mode
+
 async function buildHistPage(){
   if(!histP)histP=ME;
   const sel=document.getElementById('histPersonSelector');sel.innerHTML='';
   PERSONS.forEach(p=>{
-    const b=document.createElement('div');b.className='psel-btn'+(p===histP?' active':'');
+    const b=document.createElement('div');b.className='psel-btn'+(histMode==='single'&&p===histP?' active':'');
     b.textContent=p+(p===ME?' ★':'');
-    b.onclick=async()=>{histP=p;cache.pesos[p]=null;await buildHistPage();};
+    b.onclick=async()=>{histMode='single';histP=p;cache.pesos[p]=null;await buildHistPage();};
     sel.appendChild(b);
   });
+  // Botón "Todos"
+  const tall=document.createElement('div');
+  tall.className='psel-btn'+(histMode==='todos'?' active':'');
+  tall.textContent='👥 Todos';
+  tall.style.borderColor=histMode==='todos'?'var(--accent)':'';
+  tall.onclick=async()=>{histMode='todos';await buildHistPage();};
+  sel.appendChild(tall);
 
   const content=document.getElementById('histContent');
   content.innerHTML='<div class="loading"><span class="spin">⏳</span>Cargando...</div>';
+
+  if(histMode==='todos'){
+    await buildHistTodos(content);
+    return;
+  }
+
   await loadPesos(histP);
   await loadRecords();
 
