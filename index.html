@@ -746,7 +746,9 @@ function renderInlineChart(data,color,uid){
   const cW=W-PL-PR,cH=H-PT-PB;
   const ws=data.map(d=>+d.peso_kg);
   const mn=Math.min(...ws)-2,mx=Math.max(...ws)+2;
-  const xS=i=>(data.length<2)?cW/2:(i/(data.length-1))*cW;
+  const dates=data.map(d=>new Date(d.fecha).getTime()); 
+  const minT=dates[0],maxT=dates[dates.length-1]; 
+  const xS=i=>maxT===minT?cW/2:((dates[i]-minT)/(maxT-minT))*cW;
   const yS=w=>mx===mn?cH/2:cH-((w-mn)/(mx-mn))*cH;
   const pts=data.map((d,i)=>({x:xS(i)+PL,y:yS(+d.peso_kg)+PT,d}));
   const line=pts.map((p,i)=>(i===0?`M${p.x},${p.y}`:`L${p.x},${p.y}`)).join(' ');
@@ -827,7 +829,9 @@ function renderMultiChart(exKey){
   const allDates=[...new Set(persons.flatMap(p=>allData[p].map(d=>d.fecha)))].sort();
   const allWeights=persons.flatMap(p=>allData[p].map(d=>+d.peso_kg));
   const mn=Math.min(...allWeights)-2,mx=Math.max(...allWeights)+2;
-  const xS=i=>allDates.length<2?cW/2:(i/(allDates.length-1))*cW;
+  const dateTimes=allDates.map(d=>new Date(d).getTime()); 
+  const minT=dateTimes[0],maxT=dateTimes[dateTimes.length-1]; 
+  const xS=i=>maxT===minT?cW/2:((dateTimes[i]-minT)/(maxT-minT))*cW;
   const yS=w=>mx===mn?cH/2:cH-((w-mn)/(mx-mn))*cH;
   const lines=persons.map(p=>{
     const color=COLORS[p];
