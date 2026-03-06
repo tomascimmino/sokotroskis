@@ -1040,7 +1040,7 @@ async function buildHistPage(){
                     const prev=entries[i+1];
                     const dh=deltaHtml(e.peso_kg,prev?.peso_kg,false);
                     const editBtn=canAdd?`<button onclick="event.stopPropagation();openModalEdit('${eid}','${e.fecha}',${e.peso_kg})" style="background:none;border:none;color:var(--muted);font-size:.7rem;cursor:pointer;padding:0 4px;font-family:'Inter',sans-serif">✏️</button>`:'';
-                    return `<div class="hist-ex-row"><span style="color:var(--muted)">\${e.fecha}</span><div style="display:flex;align-items:center;gap:4px">\${dh}<span style="font-weight:700">\${e.peso_kg} \${unitLabel}</span>\${editBtn}</div></div>\`;
+                    return `<div class="hist-ex-row"><span style="color:var(--muted)">${e.fecha}</span><div style="display:flex;align-items:center;gap:4px">${dh}<span style="font-weight:700">${e.peso_kg} ${unitLabel}</span>${editBtn}</div></div>`;
                   }).join('');
                   return chart+rows;
                 })()
