@@ -857,37 +857,39 @@ async function buildHistTodos(content){
   const groups={};
   allKeys.forEach(({key,label,day})=>{if(!groups[day])groups[day]=[];groups[day].push({key,label});});
 
-  let selHtml=`<div style="background:var(--card);border:1px solid var(--border);border-radius:14px;overflow:hidden;margin-bottom:12px">`;
-  GYM_DAYS.forEach((day,gi)=>{
-    const r=ROUTINE[day];if(!groups[day])return;
-    const dayActive=groups[day].some(({key})=>key===histTodosEx);
-    const gid='tdg'+gi;
-    selHtml+=`
-      <div style="border-bottom:1px solid var(--border)">
-        <div onclick="var b=document.getElementById('${gid}');b.style.display=b.style.display==='none'?'block':'none'" style="padding:10px 14px;display:flex;align-items:center;justify-content:space-between;cursor:pointer;background:${dayActive?'#0c1a14':'#0d0d0d'}">
-          <span style="font-size:.78rem;font-weight:700;color:${dayActive?'var(--accent)':'var(--text)'}">${r.emoji} ${r.muscle}</span>
-          <span style="font-size:.6rem;color:var(--muted)">▼</span>
-        </div>
-        <div id="${gid}" style="display:${dayActive?'block':'none'};padding:8px 12px;display:flex;flex-wrap:wrap;gap:6px;padding:8px 12px">
-          ${groups[day].map(({key,label})=>{
-            const active=key===histTodosEx;
-            const safeKey=key.replace(/'/g,"\\'");
-            return`<button onclick="histTodosEx='${safeKey}';document.querySelectorAll('.tdex-btn').forEach(b=>b.style.background='var(--card2)');this.style.background='var(--accent)';renderMultiChart('${safeKey}')" class="tdex-btn" style="background:${active?'var(--accent)':'var(--card2)'};color:${active?'#000':'var(--muted)'};border:1px solid ${active?'var(--accent)':'var(--border)'};border-radius:8px;padding:5px 10px;font-size:.65rem;font-weight:700;cursor:pointer;font-family:'Inter',sans-serif">${label}</button>`;
-          }).join('')}
-        </div>
-      </div>`;
-  });
-  selHtml+=`</div>`;
+ const allKeysSorted=allKeys.map(({key,label,day})=>({key,label,muscle:ROUTINE[day].muscle}));
 
   content.innerHTML=`
     <div style="background:var(--card);border:1px solid var(--border);border-radius:14px;padding:14px 16px;margin-bottom:10px" id="todosChart">
       <div style="color:var(--muted);font-size:.78rem">Seleccioná un ejercicio abajo</div>
     </div>
-    ${selHtml}`;
+    <div style="position:relative;margin-bottom:8px">
+      <input id="exSearch" type="text" placeholder="🔍  Buscar ejercicio..." autocomplete="off"
+        style="width:100%;background:var(--card2);border:1.5px solid var(--border);border-radius:10px;padding:10px 14px;font-size:.82rem;color:var(--text);font-family:'Inter',sans-serif;outline:none"
+        oninput="filterExSearch()" onfocus="this.style.borderColor='var(--accent)'" onblur="this.style.borderColor='var(--border)'"/>
+      <div id="exSearchResults" style="display:none;background:var(--card);border:1px solid var(--border);border-radius:10px;margin-top:4px;overflow:hidden;max-height:260px;overflow-y:auto"></div>
+    </div>`;
 
+  window._allKeysSorted=allKeysSorted;
   if(histTodosEx)renderMultiChart(histTodosEx);
 }
-
+  function filterExSearch(){
+  const q=document.getElementById('exSearch').value.toLowerCase().trim();
+  const res=document.getElementById('exSearchResults');
+  if(!q){res.style.display='none';return;}
+  const matches=(window._allKeysSorted||[]).filter(({label})=>label.toLowerCase().includes(q));
+  if(!matches.length){res.style.display='none';return;}
+  res.style.display='block';
+  res.innerHTML=matches.map(({key,label,muscle})=>{
+    const active=key===histTodosEx;
+    const safeKey=key.replace(/'/g,"\\'");
+    return`<div onclick="histTodosEx='${safeKey}';document.getElementById('exSearch').value='${label.replace(/'/g,"\\'")}';document.getElementById('exSearchResults').style.display='none';renderMultiChart('${safeKey}')"
+      style="padding:9px 14px;cursor:pointer;border-bottom:1px solid var(--border);background:${active?'#0c1a14':'transparent'};display:flex;justify-content:space-between;align-items:center">
+      <span style="font-size:.8rem;font-weight:${active?'800':'600'};color:${active?'var(--accent)':'var(--text)'}">${label}</span>
+      <span style="font-size:.6rem;color:var(--muted)">${muscle}</span>
+    </div>`;
+  }).join('');
+}
 let histMode='single'; // 'single' | 'todos'
 let histTodosEx=null;   // selected exercise in todos mode
 
