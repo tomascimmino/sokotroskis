@@ -617,6 +617,12 @@ async function buildDayExList(){
       </div>`;
     el.appendChild(acc);
   });
+  const addBtn=document.createElement('button');
+  addBtn.id='addExBtn';
+  addBtn.style.cssText='width:100%;padding:14px;background:var(--card);border:1.5px dashed var(--border);border-radius:14px;color:var(--muted);font-size:.78rem;font-weight:700;cursor:pointer;font-family:Inter,sans-serif;letter-spacing:.5px;margin-top:4px';
+  addBtn.textContent='＋ Agregar ejercicio extra';
+  addBtn.onclick=openAddExModal;
+  el.appendChild(addBtn);
 }
 function toggleAcc(i){document.getElementById(`exacc-${i}`).classList.toggle('open');}
 function selectVariant(i,base,v){
@@ -702,6 +708,106 @@ async function saveWeight(){
 document.getElementById('modalOverlay').addEventListener('click',e=>{
   if(e.target===document.getElementById('modalOverlay'))closeModal();
 });
+
+  // ── AGREGAR EJERCICIO EXTRA ───────────────────────────────
+let extraExercises=[];
+const _addExMap={};
+function getAllExKeysForPicker(){
+  const keys=[];
+  GYM_DAYS.forEach(day=>{
+    if(day===todayDay)return;
+    ROUTINE[day].exercises.forEach(ex=>{
+      if(VARIANTS[ex.name]){
+        VARIANTS[ex.name].forEach(v=>keys.push({label:ex.name+' - '+v,key:ex.name+' - '+v,ex:{...ex,name:ex.name+' - '+v},day}));
+      } else {
+        keys.push({label:ex.name,key:ex.name,ex,day});
+      }
+    });
+  });
+  // también los del día actual que no estén ya
+  ROUTINE[todayDay]?.exercises.forEach(ex=>{
+    if(VARIANTS[ex.name]){
+      VARIANTS[ex.name].forEach(v=>{
+        const k=ex.name+' - '+v;
+        if(!keys.find(x=>x.key===k))keys.push({label:k,key:k,ex:{...ex,name:k},day:todayDay});
+      });
+    } else {
+      if(!keys.find(x=>x.key===ex.name))keys.push({label:ex.name,key:ex.name,ex,day:todayDay});
+    }
+  });
+  return keys;
+}
+function openAddExModal(){
+  let overlay=document.getElementById('addExOverlay');
+  if(!overlay){
+    overlay=document.createElement('div');
+    overlay.id='addExOverlay';
+    overlay.style.cssText='position:fixed;inset:0;background:rgba(0,0,0,.88);z-index:150;display:flex;align-items:flex-end;justify-content:center';
+    overlay.innerHTML=`<div style="background:#141414;border-radius:20px 20px 0 0;border-top:1px solid var(--border);padding:20px;width:100%;max-width:520px">
+      <div style="font-size:.9rem;font-weight:800;margin-bottom:12px">＋ Agregar ejercicio extra</div>
+      <input id="addExSearch" type="text" placeholder="🔍 Buscar ejercicio..." autocomplete="off"
+        style="width:100%;background:var(--card2);border:1.5px solid var(--border);border-radius:10px;padding:10px 14px;font-size:.82rem;color:var(--text);font-family:Inter,sans-serif;outline:none;margin-bottom:8px"
+        oninput="filterAddEx()"/>
+      <div id="addExList" style="max-height:260px;overflow-y:auto;border:1px solid var(--border);border-radius:10px"></div>
+      <button onclick="document.getElementById('addExOverlay').remove()" style="width:100%;margin-top:10px;padding:12px;background:none;border:none;color:var(--muted);font-size:.78rem;cursor:pointer;font-family:Inter,sans-serif">Cancelar</button>
+    </div>`;
+    overlay.addEventListener('click',e=>{if(e.target===overlay)overlay.remove();});
+    document.body.appendChild(overlay);
+  }
+  filterAddEx();
+  setTimeout(()=>document.getElementById('addExSearch')?.focus(),100);
+}
+function filterAddEx(){
+  const q=(document.getElementById('addExSearch')?.value||'').toLowerCase().trim();
+  const keys=getAllExKeysForPicker();
+  const filtered=q?keys.filter(({label})=>label.toLowerCase().includes(q)):keys;
+  const list=document.getElementById('addExList');
+  if(!list)return;
+  Object.keys(_addExMap).forEach(k=>delete _addExMap[k]);
+  filtered.forEach((item,idx)=>{_addExMap[idx]=item;});
+  list.innerHTML=filtered.map(({label,day},idx)=>`
+    <div onclick="addExtraExercise(${idx})" style="padding:10px 14px;cursor:pointer;border-bottom:1px solid var(--border);display:flex;justify-content:space-between;align-items:center">
+      <span style="font-size:.82rem;font-weight:600">${label}</span>
+      <span style="font-size:.6rem;color:var(--muted)">${ROUTINE[day]?.muscle||''}</span>
+    </div>`).join('');
+}
+function addExtraExercise(idx){
+  const item=_addExMap[idx];
+  if(!item)return;
+  document.getElementById('addExOverlay')?.remove();
+  const ex=item.ex;
+  const exKey=item.key;
+  const el=document.getElementById('dayExList');
+  const addBtn=document.getElementById('addExBtn');
+  const i='extra_'+Date.now();
+  const w=getPesoHoy(ME,exKey);
+  const hist=getPesoHistorial(ME,exKey);
+  const lastPrev=hist.find(e=>e.fecha!==todayStr);
+  const wLabel=w?`${w} kg`:'+ Peso';
+  const wClass=w?'':'empty';
+  const acc=document.createElement('div');
+  acc.className='ex-accordion';acc.id=`exacc-${i}`;
+  acc.innerHTML=`
+    <div class="ex-accordion-header" onclick="this.closest('.ex-accordion').classList.toggle('open')">
+      <div><div class="ex-acc-name">${exKey}</div><div class="ex-acc-reps">${ex.repsMin||0}-${ex.repsMax||0} reps <span style="font-size:.55rem;color:#5b9cf6">EXTRA</span></div></div>
+      <div style="display:flex;align-items:center;gap:6px">
+        <span class="ex-acc-weight ${wClass}" id="wlabel-${i}">${wLabel}</span>
+        <span class="ex-acc-arrow">▼</span>
+      </div>
+    </div>
+    <div class="ex-accordion-body">
+      <div class="ex-body-row">
+        <div class="ex-hist-mini">${lastPrev?`Última vez: <span>${lastPrev.peso_kg} kg</span> (${lastPrev.fecha})`:'Sin historial'}</div>
+        <button class="weight-btn ${wClass}" id="exbtn-${i}">${w?`Editar (${w} kg)`:'Cargar peso'}</button>
+      </div>
+    </div>`;
+  const btn=acc.querySelector(`#exbtn-${i}`);
+  btn.onclick=()=>openModal({...ex,name:exKey});
+  el.insertBefore(acc,addBtn);
+  extraExercises.push(exKey);
+}
+
+// ── RUTINA ────────────────────────────────────────────────
 
 // ── RUTINA ────────────────────────────────────────────────
 function buildRutinaPage(){
