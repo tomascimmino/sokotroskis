@@ -852,8 +852,8 @@ function renderInlineChart(data,color,uid){
   const cW=W-PL-PR,cH=H-PT-PB;
   const ws=data.map(d=>+d.peso_kg);
   const mn=Math.min(...ws)-2,mx=Math.max(...ws)+2;
-  const dates=data.map(d=>new Date(d.fecha).getTime()); 
-  const minT=dates[0],maxT=dates[dates.length-1]; 
+  const dates=data.map(d=>new Date(d.fecha).getTime());
+  const minT=dates[0],maxT=dates[dates.length-1];
   const xS=i=>maxT===minT?cW/2:((dates[i]-minT)/(maxT-minT))*cW;
   const yS=w=>mx===mn?cH/2:cH-((w-mn)/(mx-mn))*cH;
   const pts=data.map((d,i)=>({x:xS(i)+PL,y:yS(+d.peso_kg)+PT,d}));
@@ -862,7 +862,7 @@ function renderInlineChart(data,color,uid){
   const gid='g'+uid.replace(/[^a-z0-9]/gi,'_');
   const tip_id='tip'+uid.replace(/[^a-z0-9]/gi,'_');
   const wrap_id='wrap'+uid.replace(/[^a-z0-9]/gi,'_');
-  return`<div style="position:relative;margin:10px 0 6px" id="${wrap_id}">
+  const html=`<div style="position:relative;margin:10px 0 6px" id="${wrap_id}">
     <svg class="linechart" viewBox="0 0 ${W} ${H}" style="width:100%;overflow:visible">
       <defs><linearGradient id="${gid}" x1="0" y1="0" x2="0" y2="1">
         <stop offset="0%" stop-color="${color}" stop-opacity="0.22"/>
@@ -875,19 +875,19 @@ function renderInlineChart(data,color,uid){
       ${pts.map((p,i)=>`<circle class="dot" cx="${p.x}" cy="${p.y}" r="${i===pts.length-1?3.5:2.5}" fill="${i===pts.length-1?color:'#111'}" stroke="${color}" stroke-width="1.2" data-i="${i}" style="cursor:pointer"/>`).join('')}
     </svg>
     <div id="${tip_id}" style="position:absolute;background:#1a1a1a;border:1px solid ${color};border-radius:8px;padding:6px 10px;font-size:.68rem;pointer-events:none;opacity:0;transition:opacity .15s;white-space:nowrap;z-index:10;top:0;left:0"></div>
-  </div>
-  <script>
-  (function(){
-    const wrap=document.getElementById('${wrap_id}');
-    const tip=document.getElementById('${tip_id}');
-    const data=${JSON.stringify(data)};
+  </div>`;
+  const _chartData=data,_color=color;
+  requestAnimationFrame(()=>{
+    const wrap=document.getElementById(wrap_id);
+    const tip=document.getElementById(tip_id);
+    if(!wrap||!tip)return;
     wrap.querySelectorAll('.dot').forEach(dot=>{
       const show=()=>{
         const i=+dot.dataset.i;
-        const d=data[i],prev=data[i-1];
-        const delta=prev?(+(+d.peso_kg - +prev.peso_kg).toFixed(1)):null;
-        const dh=delta!==null?'<br><span style="color:'+(delta>=0?'#2ecc71':'#e05555')+'">'+(delta>=0?'+':'')+delta+' kg vs ant.</span>':'';
-        tip.innerHTML='<span style="color:#888;font-size:.6rem">'+d.fecha+'</span><br><strong style="color:${color};font-size:.85rem">'+d.peso_kg+' kg</strong>'+dh;
+        const d=_chartData[i],prev=_chartData[i-1];
+        const delta=prev?(+(+d.peso_kg-+prev.peso_kg).toFixed(1)):null;
+        const dh=delta!==null?`<br><span style="color:${delta>=0?'#2ecc71':'#e05555'}">${delta>=0?'+':''}${delta} kg vs ant.</span>`:'';
+        tip.innerHTML=`<span style="color:#888;font-size:.6rem">${d.fecha}</span><br><strong style="color:${_color};font-size:.85rem">${d.peso_kg} kg</strong>${dh}`;
         const wr=wrap.getBoundingClientRect(),dr=dot.getBoundingClientRect();
         let l=dr.left-wr.left-40,t=dr.top-wr.top-60;
         if(l<0)l=0;if(l>wr.offsetWidth-120)l=wr.offsetWidth-120;
@@ -895,13 +895,12 @@ function renderInlineChart(data,color,uid){
         tip.style.left=l+'px';tip.style.top=t+'px';tip.style.opacity='1';
       };
       dot.addEventListener('mouseenter',show);
-      dot.addEventListener('touchstart',e=>{e.preventDefault();show();setTimeout(()=>tip.style.opacity='0',2000);});
+      dot.addEventListener('touchstart',e=>{e.preventDefault();show();setTimeout(()=>tip.style.opacity='0',2000);},{passive:false});
       dot.addEventListener('mouseleave',()=>tip.style.opacity='0');
     });
-  })();
-  <\/script>`;
+  });
+  return html;
 }
-
 // ── HISTORIAL TODOS ───────────────────────────────────────
 function getAllExerciseKeys(){
   const keys=[];
