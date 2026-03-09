@@ -265,19 +265,13 @@ header{background:#0d0d0d;padding:8px 18px;border-bottom:1px solid var(--border)
       <input type="number" id="weightInput" placeholder="0" min="0" step="0.1"/>
       <span class="unit" id="weightUnit">kg</span>
     </div>
+    <div id="modalDateRow" style="margin-bottom:14px;display:none">
+      <div style="font-size:.6rem;letter-spacing:1px;text-transform:uppercase;color:var(--muted);font-weight:700;margin-bottom:6px">Fecha</div>
+      <input type="date" id="modalDate" style="width:100%;background:var(--card2);border:1.5px solid var(--border);border-radius:10px;padding:10px 14px;font-size:.9rem;font-weight:700;color:var(--text);font-family:'Inter',sans-serif;"/>
+    </div>
     <div id="modalHist"></div>
     <button class="btn-save" onclick="saveWeight()">Guardar</button>
     <button class="btn-cancel" onclick="closeModal()">Cancelar</button>
-  </div>
-</div>
-<div class="modal-overlay" id="addExOverlay">
-  <div class="modal" style="padding-bottom:16px">
-    <h3 style="margin-bottom:12px">Agregar ejercicio extra</h3>
-    <input id="addExSearch" type="text" placeholder="🔍  Buscar ejercicio..." autocomplete="off"
-      oninput="filterAddEx()"
-      style="width:100%;background:var(--card2);border:1.5px solid var(--border);border-radius:10px;padding:10px 14px;font-size:.82rem;color:var(--text);font-family:Inter,sans-serif;outline:none;margin-bottom:8px"/>
-    <div id="addExList" style="max-height:320px;overflow-y:auto;border:1px solid var(--border);border-radius:10px;background:var(--card)"></div>
-    <button class="btn-cancel" onclick="closeAddExModal()">Cancelar</button>
   </div>
 </div>
 <div class="toast" id="toast"></div>
@@ -287,11 +281,24 @@ const API='https://script.google.com/macros/s/AKfycbzPtXxxYOsjXCsnLR6ApckENIEghk
 const PERSONS=['Fede','Toti','Matu','Pepo','Jordan'];
 const PI={Fede:'F',Toti:'T',Matu:'M',Pepo:'P',Jordan:'J'};
 const COLORS={Fede:'#00c896',Toti:'#5b9cf6',Matu:'#a78bfa',Pepo:'#f59e0b',Jordan:'#f472b6'};
-const VARIANTS={
-    'Press inclinado':['Banco','Multipower','Mancuernas'],
-    'Press banca':['Banco','Multipower'],
-    'Press militar':['Multipower','Mancuernas','Barra'],
-    };
+const VARIANTS={'Press inclinado':['Banco','Multipower','Mancuernas'],'Press banca':['Banco','Multipower'],'Press militar':['Multipower','Mancuernas','Barra']};
+// ✏️ EDITAR PERFILES AQUÍ
+const PROFILES={
+  Fede: {objetivo:'bajar', meta:'Bajar grasa y definir'},
+  Toti: {objetivo:'subir', meta:'Ganar masa muscular'},
+  Matu: {objetivo:'mantener', meta:'Definirse y mantener'},
+  Pepo: {objetivo:'subir', meta:'Ganar masa muscular'},
+  Jordan:{objetivo:'subir', meta:'Ganar masa muscular'},
+};
+// Ejercicios para calcular fuerza relativa (peso_levantado / peso_corporal)
+const STRENGTH_EX=['Press banca - Multipower','Press banca - Banco','Press militar','Curl con mancuernas','Extensión trícep polea ↓','Jalón al pecho abierto'];
+const STRENGTH_COMMENTS=[
+  '🏆 Este tipo levanta pesos remotamente inalcanzables para los bobis',
+  '💪 Bestia del grupo, se nota que entrena en serio',
+  '👏 Más fuerte de lo que aparenta, respect',
+  '😅 Va muy bien, tiene margen para seguir creciendo',
+  '🔋 Recién arranca, hay mucho potencial acá',
+];
 const ROUTINE={
   Lunes:{emoji:'🦵',muscle:'Piernas',exercises:[
     {name:'Extensión de cuádricep',repsMin:12,repsMax:15},
@@ -311,13 +318,16 @@ const ROUTINE={
     {name:'Curl concentrado',repsMin:8,repsMax:12},
   ]},
   Jueves:{emoji:'🔙',muscle:'Espalda & Trícep',exercises:[
-    {name:'Jalón al pecho (polea)',repsMin:8,repsMax:12},
+    {name:'Jalón al pecho abierto',repsMin:8,repsMax:12},
+    {name:'Jalón al pecho cerrado',repsMin:8,repsMax:12},
     {name:'Remo con polea',repsMin:8,repsMax:12},
     {name:'Remo en T',repsMin:8,repsMax:12},
-    {name:'Dominadas',type:'record'},
+    {name:'Dominadas',repsMin:1,repsMax:20,unit:'reps'},
     {name:'Extensión trícep polea ↓',repsMin:8,repsMax:12},
     {name:'Extensión trícep polea ↑',repsMin:8,repsMax:12},
     {name:'Trícep tras nuca (mancuerna)',repsMin:8,repsMax:12},
+    {name:'Rompecráneo con mancuerna',repsMin:8,repsMax:12},
+    {name:'Rompecráneo con barra',repsMin:8,repsMax:12},
   ]},
   Viernes:{emoji:'🔝',muscle:'Hombro',exercises:[
     {name:'Press militar',repsMin:8,repsMax:12},
@@ -332,12 +342,26 @@ const DAY_NAMES=['Domingo','Lunes','Martes','Miercoles','Jueves','Viernes','Saba
 const GYM_DAYS=['Lunes','Miercoles','Jueves','Viernes'];
 
 let cache={asistencia:null,pesos:{},records:null};
+function getAltura(p){return parseFloat(localStorage.getItem('altura_'+p))||null;}
+function setAltura(p,v){localStorage.setItem('altura_'+p,v);}
+function getStrengthRatio(p){
+  // average of (weight_lifted / body_weight) across STRENGTH_EX
+  const bw=+(getPesoHistorial(p,'Peso corporal')[0]?.peso_kg||0);
+  if(!bw)return null;
+  let sum=0,count=0;
+  STRENGTH_EX.forEach(ex=>{
+    const h=getPesoHistorial(p,ex);
+    if(h.length){sum+=(+h[0].peso_kg/bw);count++;}
+  });
+  return count?+(sum/count).toFixed(3):null;
+}
 let ME=localStorage.getItem('sokoUser')||null;
 const today=new Date();
 const todayDay=DAY_NAMES[today.getDay()];
 const todayStr=today.toLocaleDateString('en-CA'); // YYYY-MM-DD local
 const isRest=!ROUTINE[todayDay]||ROUTINE[todayDay].exercises.length===0;
 let histP=null;
+const _histEx={}; // stores ex objects for hist modal buttons
 const selVariant={};
 
 // ── UTILS ─────────────────────────────────────────────────
@@ -525,6 +549,11 @@ function renderAttendance(){
 function renderBWCardHoy(){
   const el=document.getElementById('bwCardHoy');if(!el)return;
   const w=getPesoHoy(ME,'Peso corporal');
+  const prof=PROFILES[ME]||{};
+  const altura=getAltura(ME);
+  const objColor=prof.objetivo==='bajar'?'#5b9cf6':prof.objetivo==='mantener'?'#f59e0b':'#2ecc71';
+  const alturaHtml=altura?`<div style="font-size:.6rem;color:var(--muted);margin-top:2px">${altura} cm · <span style="color:${objColor}">${prof.meta||''}</span></div>`
+    :`<div style="font-size:.6rem;color:var(--accent);margin-top:2px;cursor:pointer" onclick="promptAltura()">+ Agregar altura</div>`;
   el.innerHTML=`
     <div class="bw-card">
       <div class="bw-left">
@@ -532,10 +561,15 @@ function renderBWCardHoy(){
         <div>
           <div class="bw-label">Peso corporal</div>
           <div class="bw-value${w?'':' empty'}">${w?w+' kg':'Sin registrar hoy'}</div>
+          ${alturaHtml}
         </div>
       </div>
       <button class="bw-btn${w?'':' empty'}" onclick="openModal({name:'Peso corporal',isBW:true})">${w?'Editar':'+ Registrar'}</button>
     </div>`;
+}
+function promptAltura(){
+  const v=prompt('¿Cuánto medís? (en cm, ej: 178)');
+  if(v&&!isNaN(+v)&&+v>100&&+v<230){setAltura(ME,+v);renderBWCardHoy();showToast('📏 Altura guardada: '+v+' cm');}
 }
 
 // ── EJERCICIOS DEL DÍA ────────────────────────────────────
@@ -549,13 +583,15 @@ async function buildDayExList(){
   el.innerHTML='';
   r.exercises.forEach((ex,i)=>{
     const isRec=ex.type==='record';
+    const isReps=ex.unit==='reps';
     const exKey=getExKey(ex.name);
     const w=isRec?null:getPesoHoy(ME,exKey);
     const pr=(cache.records||[]).find(rec=>rec.persona.toLowerCase()===ME.toLowerCase()&&rec.ejercicio===exKey);
     const hist=isRec?[]:getPesoHistorial(ME,exKey);
     const lastPrev=hist.find(e=>e.fecha!==todayStr);
     const repsLabel=isRec?'lo que te dé 😤':`${ex.repsMin}-${ex.repsMax} reps`;
-    const wLabel=isRec?(pr?`🏆 ${pr.valor} reps`:'Sin récord'):(w?`${w} kg`:'+ Peso');
+    const unitLabel=isReps?'reps':'kg';
+    const wLabel=isRec?(pr?`🏆 ${pr.valor} reps`:'Sin récord'):(w?`${w} ${unitLabel}`:'+ '+(isReps?'Reps':'Peso'));
     const wClass=w||pr?'':'empty';
     let varHtml='';
     if(VARIANTS[ex.name]){
@@ -574,111 +610,15 @@ async function buildDayExList(){
       <div class="ex-accordion-body">
         ${varHtml}
         <div class="ex-body-row">
-          <div class="ex-hist-mini" id="exhist-${i}">${lastPrev?`Última vez: <span>${lastPrev.peso_kg} kg</span> (${lastPrev.fecha})`:(pr?`Récord: <span>${pr.valor} reps</span>`:'Sin historial')}</div>
-          <button class="weight-btn ${wClass}" id="exbtn-${i}" onclick='openModal(${JSON.stringify({...ex,name:exKey})})'>${isRec?(pr?'Actualizar':'Marcar récord'):(w?`Editar (${w} kg)`:'Cargar peso')}</button>
+          <div class="ex-hist-mini" id="exhist-${i}">${lastPrev?`Última vez: <span>${lastPrev.peso_kg} ${unitLabel}</span> (${lastPrev.fecha})`:(pr?`Récord: <span>${pr.valor} reps</span>`:'Sin historial')}</div>
+          <button class="weight-btn ${wClass}" id="exbtn-${i}" onclick='openModal(${JSON.stringify({...ex,name:exKey})})'>${isRec?(pr?'Actualizar':'Marcar récord'):(w?`Editar (${w} ${unitLabel})`:'Cargar '+(isReps?'reps':'peso'))}</button>
         </div>
-        ${!isRec&&hist.length>1?`<div id="exhistlist-${i}">${hist.slice(0,3).map(e=>`<div class="hist-row"><span class="hist-date">${e.fecha}</span><span class="hist-w">${e.peso_kg} kg</span></div>`).join('')}</div>`:`<div id="exhistlist-${i}"></div>`}
+        ${!isRec&&hist.length>1?`<div id="exhistlist-${i}">${hist.slice(0,3).map(e=>`<div class="hist-row"><span class="hist-date">${e.fecha}</span><span class="hist-w">${e.peso_kg} ${unitLabel}</span></div>`).join('')}</div>`:`<div id="exhistlist-${i}"></div>`}
       </div>`;
-   el.appendChild(acc);
+    el.appendChild(acc);
   });
-  // botón agregar ejercicio extra
-  const addBtn=document.createElement('button');
-  addBtn.id='addExBtn';
-  addBtn.onclick=openAddExModal;
-  addBtn.style.cssText='width:100%;padding:14px;background:var(--card);border:1.5px dashed var(--border);border-radius:14px;color:var(--muted);font-size:.78rem;font-weight:700;cursor:pointer;font-family:Inter,sans-serif;letter-spacing:.5px;margin-top:4px';
-  addBtn.textContent='＋ Agregar ejercicio extra';
-  el.appendChild(addBtn);
 }
-
 function toggleAcc(i){document.getElementById(`exacc-${i}`).classList.toggle('open');}
-// ── EJERCICIO EXTRA ───────────────────────────────────────
-let extraExercises=[];
-const _addExMap={};
-
-function getAllExKeysForPicker(){
-  const todayKeys=new Set();
-  (ROUTINE[todayDay]?.exercises||[]).forEach(ex=>{
-    if(VARIANTS[ex.name])VARIANTS[ex.name].forEach(v=>todayKeys.add(ex.name+' - '+v));
-    else todayKeys.add(ex.name);
-  });
-  extraExercises.forEach(({key})=>todayKeys.add(key));
-  const all=[];
-  GYM_DAYS.forEach(day=>{
-    ROUTINE[day].exercises.forEach(ex=>{
-      if(VARIANTS[ex.name]){
-        VARIANTS[ex.name].forEach(v=>{
-          const key=ex.name+' - '+v;
-          if(!todayKeys.has(key))all.push({ex:{...ex,name:key},key,muscle:ROUTINE[day].muscle});
-        });
-      } else {
-        if(!todayKeys.has(ex.name))all.push({ex,key:ex.name,muscle:ROUTINE[day].muscle});
-      }
-    });
-  });
-  return all;
-}
-function openAddExModal(){
-  document.getElementById('addExOverlay').classList.add('open');
-  document.getElementById('addExSearch').value='';
-  filterAddEx();
-  setTimeout(()=>document.getElementById('addExSearch').focus(),200);
-}
-function closeAddExModal(){document.getElementById('addExOverlay').classList.remove('open');}
-function filterAddEx(){
-  const q=document.getElementById('addExSearch').value.toLowerCase().trim();
-  const list=document.getElementById('addExList');
-  const all=getAllExKeysForPicker();
-  const filtered=q?all.filter(({key})=>key.toLowerCase().includes(q)):all;
-  if(!filtered.length){list.innerHTML='<div style="padding:16px;text-align:center;color:var(--muted);font-size:.8rem">Sin resultados</div>';return;}
-  list.innerHTML='';
-  filtered.forEach(({ex,key,muscle},idx)=>{
-    _addExMap[idx]={ex,key};
-    const div=document.createElement('div');
-    div.style.cssText='padding:11px 16px;cursor:pointer;border-bottom:1px solid var(--border);display:flex;justify-content:space-between;align-items:center';
-    div.innerHTML=`<span style="font-size:.82rem;font-weight:600">${key}</span><span style="font-size:.6rem;color:var(--muted)">${muscle}</span>`;
-    div.onclick=()=>addExtraExercise(idx);
-    list.appendChild(div);
-  });
-}
-function addExtraExercise(idx){
-  const {ex,key}=_addExMap[idx];
-  closeAddExModal();
-  extraExercises.push({ex,key});
-  const el=document.getElementById('dayExList');
-  const addBtn=document.getElementById('addExBtn');
-  const i='extra_'+extraExercises.length;
-  const isReps=ex.unit==='reps';
-  const unitLabel=isReps?'reps':'kg';
-  const w=getPesoHoy(ME,key);
-  const hist=getPesoHistorial(ME,key);
-  const lastPrev=hist.find(e=>e.fecha!==todayStr);
-  const wLabel=w?`${w} ${unitLabel}`:'+ '+(isReps?'Reps':'Peso');
-  const wClass=w?'':'empty';
-  const exObj={...ex,name:key};
-  _addExMap['acc_'+i]=exObj;
-  const acc=document.createElement('div');
-  acc.className='ex-accordion';acc.id=`exacc-${i}`;
-  acc.innerHTML=`
-    <div class="ex-accordion-header" onclick="toggleAcc('${i}')">
-      <div>
-        <div class="ex-acc-name">➕ ${key}</div>
-        <div class="ex-acc-reps" style="color:#5b9cf6;font-size:.58rem">Extra de hoy</div>
-      </div>
-      <div style="display:flex;align-items:center;gap:6px">
-        <span class="ex-acc-weight ${wClass}" id="wlabel-${i}">${wLabel}</span>
-        <span class="ex-acc-arrow">▼</span>
-      </div>
-    </div>
-    <div class="ex-accordion-body">
-      <div class="ex-body-row">
-        <div class="ex-hist-mini">${lastPrev?`Última vez: <span>${lastPrev.peso_kg} ${unitLabel}</span> (${lastPrev.fecha})`:('Sin historial')}</div>
-        <button class="weight-btn ${wClass}" id="exbtn-${i}">Cargar ${isReps?'reps':'peso'}</button>
-      </div>
-    </div>`;
-  el.insertBefore(acc,addBtn);
-  document.getElementById(`exbtn-${i}`).onclick=()=>openModal(_addExMap['acc_'+i]);
-}
-
 function selectVariant(i,base,v){
   selVariant[base]=v;
   document.getElementById(`vtog-${i}`).querySelectorAll('.vt-btn').forEach(b=>b.className='vt-btn'+(b.textContent===v?' active':''));
@@ -699,12 +639,24 @@ function selectVariant(i,base,v){
 
 // ── MODAL ─────────────────────────────────────────────────
 let modalEx=null;
-function openModal(ex){
+function openModal(ex, allowDateEdit=false){
   modalEx=ex;
   const isRec=ex.type==='record';
+  const isReps=ex.unit==='reps';
   document.getElementById('modalExName').textContent=ex.name;
-  document.getElementById('modalExSeries').textContent=ex.isBW?'Tu peso corporal de hoy':isRec?'Récord de repeticiones — lo que te dé 😤':`${ex.repsMin}-${ex.repsMax} reps`;
-  document.getElementById('weightUnit').textContent=isRec?'reps':'kg';
+  document.getElementById('modalExSeries').textContent=ex.isBW?'Peso corporal':isRec?'Récord de repeticiones — lo que te dé 😤':`${ex.repsMin}-${ex.repsMax} reps`;
+  document.getElementById('weightUnit').textContent=isRec?'reps':isReps?'reps':'kg';
+  // date input — show only from historial
+  const dateRow=document.getElementById('modalDateRow');
+  const dateInput=document.getElementById('modalDate');
+  if(allowDateEdit&&!isRec){
+    dateRow.style.display='block';
+    dateInput.value=todayStr;
+    dateInput.max=todayStr;
+  } else {
+    dateRow.style.display='none';
+    dateInput.value=todayStr;
+  }
   document.getElementById('weightInput').value=isRec?((cache.records||[]).find(r=>r.persona.toLowerCase()===ME.toLowerCase()&&r.ejercicio===ex.name)?.valor||''):(getPesoHoy(ME,ex.name)||'');
   const hist=document.getElementById('modalHist');
   if(isRec){hist.innerHTML='';}
@@ -718,26 +670,33 @@ function openModal(ex){
   setTimeout(()=>document.getElementById('weightInput').focus(),200);
 }
 function closeModal(){document.getElementById('modalOverlay').classList.remove('open');modalEx=null;}
+function openModalEdit(eid,fecha,pesoActual){
+  const ex=_histEx[eid];
+  if(!ex)return;
+  openModal(ex,true);
+  document.getElementById('modalDate').value=fecha;
+  document.getElementById('weightInput').value=pesoActual;
+}
 async function saveWeight(){
   const val=parseFloat(document.getElementById('weightInput').value);
   if(!val||isNaN(val)){closeModal();return;}
   const exCopy={...modalEx};
+  const fechaGuardar=document.getElementById('modalDate').value||todayStr;
   closeModal();
   const isRec=exCopy.type==='record';
   try{
     if(isRec){
-      const res=await api({action:'setRecord',persona:ME,ejercicio:exCopy.name,valor:val,fecha:todayStr});
+      const res=await api({action:'setRecord',persona:ME,ejercicio:exCopy.name,valor:val,fecha:fechaGuardar});
       if(res.nuevo_record){showToast('🏆 ¡Nuevo récord! '+val+' reps','ok');cache.records=null;await loadRecords();}
       else showToast('Récord actual: '+res.valor+' reps');
     }else{
-      await api({action:'setPeso',persona:ME,ejercicio:exCopy.name,peso_kg:val,fecha:todayStr,series:3,reps_min:exCopy.repsMin||0,reps_max:exCopy.repsMax||0});
+      await api({action:'setPeso',persona:ME,ejercicio:exCopy.name,peso_kg:val,fecha:fechaGuardar,series:3,reps_min:exCopy.repsMin||0,reps_max:exCopy.repsMax||0});
       if(!cache.pesos[ME])cache.pesos[ME]=[];
-      // replace same date+ejercicio in cache
-      cache.pesos[ME]=cache.pesos[ME].filter(r=>!(r.fecha===todayStr&&r.ejercicio===exCopy.name));
-      cache.pesos[ME].push({fecha:todayStr,persona:ME,ejercicio:exCopy.name,peso_kg:val});
-      showToast(exCopy.isBW?'⚖️ Peso guardado: '+val+' kg':'💾 Guardado: '+val+' kg','ok');
+      cache.pesos[ME]=cache.pesos[ME].filter(r=>!(r.fecha===fechaGuardar&&r.ejercicio===exCopy.name));
+      cache.pesos[ME].push({fecha:fechaGuardar,persona:ME,ejercicio:exCopy.name,peso_kg:val});
+      showToast('💾 '+val+' kg — '+fechaGuardar,'ok');
     }
-    if(exCopy.isBW){renderBWCardHoy();}else{buildDayExList();}
+    if(exCopy.isBW){renderBWCardHoy();}else if(fechaGuardar===todayStr){buildDayExList();}else{buildHistPage();}
   }catch(e){showToast('Error: '+e.message,'err');console.error(e);}
 }
 document.getElementById('modalOverlay').addEventListener('click',e=>{
@@ -787,7 +746,9 @@ function renderInlineChart(data,color,uid){
   const cW=W-PL-PR,cH=H-PT-PB;
   const ws=data.map(d=>+d.peso_kg);
   const mn=Math.min(...ws)-2,mx=Math.max(...ws)+2;
-  const xS=i=>(data.length<2)?cW/2:(i/(data.length-1))*cW;
+  const dates=data.map(d=>new Date(d.fecha).getTime()); 
+  const minT=dates[0],maxT=dates[dates.length-1]; 
+  const xS=i=>maxT===minT?cW/2:((dates[i]-minT)/(maxT-minT))*cW;
   const yS=w=>mx===mn?cH/2:cH-((w-mn)/(mx-mn))*cH;
   const pts=data.map((d,i)=>({x:xS(i)+PL,y:yS(+d.peso_kg)+PT,d}));
   const line=pts.map((p,i)=>(i===0?`M${p.x},${p.y}`:`L${p.x},${p.y}`)).join(' ');
@@ -835,52 +796,176 @@ function renderInlineChart(data,color,uid){
   <\/script>`;
 }
 
+// ── HISTORIAL TODOS ───────────────────────────────────────
+function getAllExerciseKeys(){
+  const keys=[];
+  GYM_DAYS.forEach(day=>{
+    ROUTINE[day].exercises.forEach(ex=>{
+      if(VARIANTS[ex.name]){
+        VARIANTS[ex.name].forEach(v=>keys.push({label:ex.name+' - '+v,key:ex.name+' - '+v,day,ex}));
+      } else {
+        keys.push({label:ex.name,key:ex.name,day,ex});
+      }
+    });
+  });
+  return keys;
+}
+
+function renderMultiChart(exKey){
+  const allData={};
+  PERSONS.forEach(p=>{
+    const rows=getPesoHistorial(p,exKey);
+    if(rows.length)allData[p]=[...rows].reverse();
+  });
+  const persons=Object.keys(allData);
+  const chartEl=document.getElementById('todosChart');
+  if(!chartEl)return;
+  if(!persons.length){
+    chartEl.innerHTML='<div style="text-align:center;padding:30px;color:var(--muted);font-size:.8rem">Sin datos para este ejercicio todavía.</div>';
+    return;
+  }
+  const W=320,H=110,PL=32,PR=8,PT=10,PB=20;
+  const cW=W-PL-PR,cH=H-PT-PB;
+  const allDates=[...new Set(persons.flatMap(p=>allData[p].map(d=>d.fecha)))].sort();
+  const allWeights=persons.flatMap(p=>allData[p].map(d=>+d.peso_kg));
+  const mn=Math.min(...allWeights)-2,mx=Math.max(...allWeights)+2;
+  const dateTimes=allDates.map(d=>new Date(d).getTime()); 
+  const minT=dateTimes[0],maxT=dateTimes[dateTimes.length-1]; 
+  const xS=i=>maxT===minT?cW/2:((dateTimes[i]-minT)/(maxT-minT))*cW;
+  const yS=w=>mx===mn?cH/2:cH-((w-mn)/(mx-mn))*cH;
+  const lines=persons.map(p=>{
+    const color=COLORS[p];
+    const pts=allData[p].map(d=>({x:xS(allDates.indexOf(d.fecha))+PL,y:yS(+d.peso_kg)+PT}));
+    const pathD=pts.map((pt,i)=>i===0?`M${pt.x},${pt.y}`:`L${pt.x},${pt.y}`).join(' ');
+    const dots=pts.map((pt,i)=>`<circle cx="${pt.x}" cy="${pt.y}" r="${i===pts.length-1?3.5:2.5}" fill="${i===pts.length-1?color:'#111'}" stroke="${color}" stroke-width="1.2"/>`).join('');
+    return`<path d="${pathD}" fill="none" stroke="${color}" stroke-width="1.8" stroke-linejoin="round" stroke-linecap="round" opacity="0.9"/>${dots}`;
+  }).join('');
+  const yLabels=[mn+2,mx-2].map(w=>`<text x="${PL-4}" y="${yS(w)+PT+3}" text-anchor="end" font-size="7" fill="#555">${w.toFixed(0)}</text>`).join('');
+  const xLabels=allDates.length>=2?`<text x="${PL}" y="${H-2}" text-anchor="middle" font-size="7" fill="#555">${allDates[0].slice(5)}</text><text x="${W-PR}" y="${H-2}" text-anchor="end" font-size="7" fill="#555">${allDates[allDates.length-1].slice(5)}</text>`:'';
+  const svgHtml=`<svg viewBox="0 0 ${W} ${H}" style="width:100%;overflow:visible;margin:8px 0 4px">${yLabels}${xLabels}${lines}</svg>`;
+  // legend sorted by last value desc
+  const sorted=[...persons].sort((a,b)=>+allData[b][allData[b].length-1].peso_kg - +allData[a][allData[a].length-1].peso_kg);
+  const legend=sorted.map(p=>{
+    const last=allData[p][allData[p].length-1];
+    return`<div style="display:flex;align-items:center;gap:8px;padding:5px 0;border-bottom:1px solid var(--border)">
+      <div style="width:8px;height:8px;border-radius:50%;background:${COLORS[p]};flex-shrink:0"></div>
+      <span style="font-size:.78rem;font-weight:700;flex:1">${p}</span>
+      <span style="font-size:.78rem;color:${COLORS[p]};font-weight:800">${last.peso_kg} kg</span>
+    </div>`;
+  }).join('');
+  chartEl.innerHTML=`
+    <div style="font-size:.62rem;letter-spacing:1.5px;text-transform:uppercase;color:var(--accent);font-weight:700;margin-bottom:6px">${exKey}</div>
+    ${svgHtml}${legend}`;
+}
+
+async function buildHistTodos(content){
+  content.innerHTML='<div class="loading"><span class="spin">⏳</span>Cargando todos...</div>';
+  await Promise.all(PERSONS.map(p=>loadPesos(p)));
+  const allKeys=getAllExerciseKeys();
+  if(!histTodosEx)histTodosEx=allKeys[0]?.key||null;
+  const allKeysSorted=allKeys.map(({key,label,day})=>({key,label,muscle:ROUTINE[day].muscle}));
+  content.innerHTML=`
+    <div style="position:relative;margin-bottom:8px">
+      <div style="display:flex;gap:8px">
+        <input id="exSearch" type="text" placeholder="🔍  Buscar ejercicio..." autocomplete="off"
+          style="flex:1;background:var(--card2);border:1.5px solid var(--border);border-radius:10px;padding:10px 14px;font-size:.82rem;color:var(--text);font-family:'Inter',sans-serif;outline:none"
+          oninput="filterExSearch()" onfocus="this.style.borderColor='var(--accent)';filterExSearch()" onblur="this.style.borderColor='var(--border)'"/>
+        <button onclick="document.getElementById('exSearch').value='';filterExSearch();document.getElementById('exSearch').focus()" style="background:var(--card2);color:var(--muted);border:1.5px solid var(--border);border-radius:10px;padding:0 14px;font-size:1rem;cursor:pointer;font-family:'Inter',sans-serif;line-height:1">✕</button>
+      </div>
+      <div id="exSearchResults" style="display:none;background:var(--card);border:1px solid var(--border);border-radius:10px;margin-top:4px;overflow:hidden;max-height:260px;overflow-y:auto"></div>
+    </div>
+    <div style="background:var(--card);border:1px solid var(--border);border-radius:14px;padding:14px 16px;margin-bottom:10px" id="todosChart">
+      <div style="color:var(--muted);font-size:.78rem">Buscá o tocá "Ver todos" para elegir un ejercicio 👆</div>
+    </div>`;
+  window._allKeysSorted=allKeysSorted;
+  if(histTodosEx)renderMultiChart(histTodosEx);
+}
+function filterExSearch(){
+  const q=document.getElementById('exSearch').value.toLowerCase().trim();
+  const res=document.getElementById('exSearchResults');
+  const filtered=q?(window._allKeysSorted||[]).filter(({label})=>label.toLowerCase().includes(q)):(window._allKeysSorted||[]);
+  if(!filtered.length){res.style.display='none';return;}
+  res.style.display='block';
+  res.innerHTML=filtered.map(({key,label,muscle})=>{
+    const active=key===histTodosEx;
+    const safeKey=key.replace(/'/g,"\\'");
+    return`<div onclick="histTodosEx='${safeKey}';document.getElementById('exSearch').value='${label}';document.getElementById('exSearchResults').style.display='none';renderMultiChart('${safeKey}')"
+      style="padding:9px 14px;cursor:pointer;border-bottom:1px solid var(--border);background:${active?'#0c1a14':'transparent'};display:flex;justify-content:space-between;align-items:center">
+      <span style="font-size:.8rem;font-weight:${active?'800':'600'};color:${active?'var(--accent)':'var(--text)'}">${label}</span>
+      <span style="font-size:.6rem;color:var(--muted)">${muscle}</span>
+    </div>`;
+  }).join('');
+}
+
+let histMode='single'; // 'single' | 'todos'
+let histTodosEx=null;   // selected exercise in todos mode
+
 async function buildHistPage(){
   if(!histP)histP=ME;
   const sel=document.getElementById('histPersonSelector');sel.innerHTML='';
   PERSONS.forEach(p=>{
-    const b=document.createElement('div');b.className='psel-btn'+(p===histP?' active':'');
+    const b=document.createElement('div');b.className='psel-btn'+(histMode==='single'&&p===histP?' active':'');
     b.textContent=p+(p===ME?' ★':'');
-    b.onclick=async()=>{histP=p;cache.pesos[p]=null;await buildHistPage();};
+    b.onclick=async()=>{histMode='single';histP=p;cache.pesos[p]=null;await buildHistPage();};
     sel.appendChild(b);
   });
+  // Botón "Todos"
+  const tall=document.createElement('div');
+  tall.className='psel-btn'+(histMode==='todos'?' active':'');
+  tall.textContent='👥 Todos';
+  tall.style.borderColor=histMode==='todos'?'var(--accent)':'';
+  tall.onclick=async()=>{histMode='todos';await buildHistPage();};
+  sel.appendChild(tall);
 
   const content=document.getElementById('histContent');
   content.innerHTML='<div class="loading"><span class="spin">⏳</span>Cargando...</div>';
+
+  if(histMode==='todos'){
+    await buildHistTodos(content);
+    return;
+  }
+
   await loadPesos(histP);
   await loadRecords();
 
   let html='';
 
-  // ── Peso corporal ──
+  // ── Peso corporal ── siempre visible
   const bwRows=getPesoHistorial(histP,'Peso corporal');
-  if(bwRows.length){
-    const latest=bwRows[0];
-    html+=`
-      <div class="bw-hist-block" id="bwhistblock">
-        <div class="bw-hist-header" onclick="document.getElementById('bwhistblock').classList.toggle('open')">
-          <div style="display:flex;align-items:center;gap:10px">
-            <span style="font-size:1.3rem">⚖️</span>
-            <div>
-              <div style="font-size:.9rem;font-weight:800">Peso corporal</div>
-              <div style="font-size:.62rem;color:#9ca3af;margin-top:2px">${bwRows.length} registros</div>
-            </div>
-          </div>
-          <div style="display:flex;align-items:center;gap:8px">
-            <span style="font-size:.88rem;font-weight:800;color:#c084fc">${latest.peso_kg} kg</span>
-            <span class="bw-hist-arrow">▼</span>
+  const bwCanAdd=histP===ME;
+  _histEx['bwhist']={name:'Peso corporal',isBW:true};
+  html+=`
+    <div class="bw-hist-block${bwRows.length?' open':''}" id="bwhistblock">
+      <div class="bw-hist-header" onclick="document.getElementById('bwhistblock').classList.toggle('open')">
+        <div style="display:flex;align-items:center;gap:10px">
+          <span style="font-size:1.3rem">⚖️</span>
+          <div>
+            <div style="font-size:.9rem;font-weight:800">Peso corporal</div>
+            <div style="font-size:.62rem;color:#9ca3af;margin-top:2px">${bwRows.length?bwRows.length+' registros':'sin datos'}</div>
           </div>
         </div>
-        <div class="bw-hist-body">
-          ${renderInlineChart([...bwRows].reverse(),'#c084fc','bwchart_'+histP)}
-          ${bwRows.map((r,i)=>{
+        <div style="display:flex;align-items:center;gap:8px">
+          ${bwCanAdd?`<button onclick="event.stopPropagation();openModal(_histEx['bwhist'],true)" style="background:var(--card2);border:1px dashed #c084fc;color:#c084fc;border-radius:6px;padding:3px 8px;font-size:.6rem;font-weight:700;cursor:pointer;font-family:'Inter',sans-serif">+ kg</button>`:''}
+          ${bwRows.length?`<span style="font-size:.88rem;font-weight:800;color:#c084fc">${bwRows[0].peso_kg} kg</span>`:''}
+          <span class="bw-hist-arrow">▼</span>
+        </div>
+      </div>
+      <div class="bw-hist-body">
+        ${bwRows.length>=2?renderInlineChart([...bwRows].reverse(),'#c084fc','bwchart_'+histP):''}
+        ${(()=>{
+          const prof=PROFILES[histP]||{};
+          const invert=prof.objetivo==='bajar'||prof.objetivo==='mantener';
+          const objColor=prof.objetivo==='bajar'?'#5b9cf6':prof.objetivo==='mantener'?'#f59e0b':'#2ecc71';
+          const objHtml=prof.meta?`<div style="font-size:.62rem;color:${objColor};margin-bottom:8px">Objetivo: ${prof.meta}</div>`:'';
+          const rows=bwRows.map((r,i)=>{
             const prev=bwRows[i+1];
-            const dh=deltaHtml(r.peso_kg,prev?.peso_kg,true);
+            const dh=deltaHtml(r.peso_kg,prev?.peso_kg,invert);
             return`<div class="hist-ex-row"><span style="color:var(--muted)">${r.fecha}</span><div style="display:flex;align-items:center;gap:6px">${dh}<span style="font-weight:700">${r.peso_kg} kg</span></div></div>`;
-          }).join('')}
-        </div>
-      </div>`;
-  }
+          }).join('');
+          return objHtml+rows||'<div style="color:var(--muted);font-size:.75rem;padding:4px 0">Sin registros todavía.</div>';
+        })()}
+      </div>
+    </div>`;
 
   // ── Ejercicios agrupados por músculo ──
   let anyEx=false;
@@ -895,15 +980,17 @@ async function buildHistPage(){
         allKeys.push({ex,key:ex.name});
       }
     });
+    // split into with/without data
     const withData=allKeys.filter(({ex,key})=>{
       if(ex.type==='record')return(cache.records||[]).some(rec=>rec.persona.toLowerCase()===histP.toLowerCase()&&rec.ejercicio===key);
       return getPesoHistorial(histP,key).length>0;
     });
-    if(!withData.length)return;
+    const noData=allKeys.filter(({ex,key})=>!withData.find(w=>w.key===key));
     anyEx=true;
     const gid=`hgroup-${gi}`;
+    // open if has data, closed if not
     html+=`
-      <div class="hist-group-block open" id="${gid}">
+      <div class="hist-group-block${withData.length?' open':''}" id="${gid}">
         <div class="hist-group-header" onclick="document.getElementById('${gid}').classList.toggle('open')">
           <div class="hist-group-title">
             <span style="font-size:1.2rem">${r.emoji}</span>
@@ -912,20 +999,34 @@ async function buildHistPage(){
               <div style="font-size:.9rem;font-weight:800">${r.muscle}</div>
             </div>
           </div>
-          <span class="hist-group-arrow">▼</span>
+          <div style="display:flex;align-items:center;gap:8px">
+            ${withData.length
+              ?`<span style="font-size:.62rem;color:var(--accent);font-weight:700">${withData.length} ejercicios</span>`
+              :`<span style="font-size:.62rem;color:var(--muted)">sin datos</span>`}
+            <span class="hist-group-arrow">▼</span>
+          </div>
         </div>
         <div class="hist-group-body">`;
+    // exercises with data first
     withData.forEach(({ex,key},ei)=>{
       const isRec=ex.type==='record';
+      const isReps=ex.unit==='reps';
+      const unitLabel=isReps?'reps':'kg';
       const pr=(cache.records||[]).find(rec=>rec.persona.toLowerCase()===histP.toLowerCase()&&rec.ejercicio===key);
       const entries=isRec?[]:getPesoHistorial(histP,key);
       const maxW=isRec?pr.valor:Math.max(...entries.map(e=>+e.peso_kg));
       const eid=`${gid}-ex-${ei}`;
+      const exObj=allKeys.find(k=>k.key===key)?.ex||{};
+      const canAdd=histP===ME&&!isRec;
+      _histEx[eid]={...exObj,name:key};
       html+=`
         <div class="hist-ex-item">
           <div class="hist-ex-header" onclick="var b=document.getElementById('${eid}');b.classList.toggle('open')">
             <div class="hex-name">${key}</div>
-            <div class="hex-pr">${isRec?'🏆 '+maxW+' reps':'PR: '+maxW+' kg'}</div>
+            <div style="display:flex;align-items:center;gap:6px">
+              ${canAdd?`<button onclick="event.stopPropagation();openModal(_histEx['${eid}'],true)" style="background:var(--card2);border:1px dashed var(--accent);color:var(--accent);border-radius:6px;padding:3px 8px;font-size:.6rem;font-weight:700;cursor:pointer;font-family:'Inter',sans-serif">+ ${unitLabel}</button>`:''}
+              <div class="hex-pr">${isRec?'🏆 '+maxW+' reps':'PR: '+maxW+' '+unitLabel}</div>
+            </div>
           </div>
           <div class="hist-ex-body" id="${eid}">
             ${isRec
@@ -936,11 +1037,28 @@ async function buildHistPage(){
                   const rows=entries.map((e,i)=>{
                     const prev=entries[i+1];
                     const dh=deltaHtml(e.peso_kg,prev?.peso_kg,false);
-                    return`<div class="hist-ex-row"><span style="color:var(--muted)">${e.fecha}</span><div style="display:flex;align-items:center;gap:6px">${dh}<span style="font-weight:700">${e.peso_kg} kg</span></div></div>`;
+                    const editBtn=canAdd?`<button onclick="event.stopPropagation();openModalEdit('${eid}','${e.fecha}',${e.peso_kg})" style="background:none;border:none;color:var(--muted);font-size:.7rem;cursor:pointer;padding:0 4px;font-family:'Inter',sans-serif">✏️</button>`:'';
+                    return `<div class="hist-ex-row"><span style="color:var(--muted)">${e.fecha}</span><div style="display:flex;align-items:center;gap:4px">${dh}<span style="font-weight:700">${e.peso_kg} ${unitLabel}</span>${editBtn}</div></div>`;
                   }).join('');
                   return chart+rows;
                 })()
             }
+          </div>
+        </div>`;
+    });
+    // exercises without data — show with add button if it's me
+    noData.forEach(({ex,key},ni)=>{
+      const canAdd=histP===ME;
+      const neid=`${gid}-nd-${ni}`;
+      _histEx[neid]={...ex,name:key};
+      html+=`
+        <div class="hist-ex-item" style="opacity:${canAdd?.6:.3}">
+          <div class="hist-ex-header" style="cursor:default">
+            <div class="hex-name">${key}</div>
+            <div style="display:flex;align-items:center;gap:6px">
+              ${canAdd?`<button onclick="openModal(_histEx['${neid}'],true)" style="background:var(--card2);border:1px dashed var(--accent);color:var(--accent);border-radius:6px;padding:3px 8px;font-size:.6rem;font-weight:700;cursor:pointer;font-family:'Inter',sans-serif">+ kg</button>`:''}
+              <div style="font-size:.62rem;color:var(--muted)">sin datos</div>
+            </div>
           </div>
         </div>`;
     });
@@ -962,10 +1080,12 @@ async function buildStatsPage(){
     if(Array.isArray(data))data.forEach(row=>PERSONS.forEach(p=>{if(row[p.toLowerCase()]===1||row[p.toLowerCase()]==='1')cnt[p]++;}));
     const totalDays=Array.isArray(data)?data.length:0;
     const avg=totalDays?(Object.values(cnt).reduce((a,b)=>a+b,0)/totalDays).toFixed(1):0;
+    // días sin nadie = días donde nadie marcó asistencia
+    const sinNadie=Array.isArray(data)?data.filter(row=>PERSONS.every(p=>!(row[p.toLowerCase()]===1||row[p.toLowerCase()]==='1'))).length:0;
     document.getElementById('statsGrid').innerHTML=`
       <div class="stat-card"><div class="stat-n">${totalDays}</div><div class="stat-l">Días este mes</div></div>
-      <div class="stat-card"><div class="stat-n">${avg}</div><div class="stat-l">Promedio de asistentes</div></div>
-      <div class="stat-card"><div class="stat-n">${Math.max(0,...Object.values(cnt))}</div><div class="stat-l">Máx sesiones</div></div>`;
+      <div class="stat-card"><div class="stat-n">${avg}</div><div class="stat-l">Promedio asistentes</div></div>
+      <div class="stat-card"><div class="stat-n">${sinNadie}</div><div class="stat-l">Días sin nadie</div></div>`;
     const as=document.getElementById('attendStats');as.innerHTML='';
     [...PERSONS].sort((a,b)=>cnt[b]-cnt[a]).forEach(p=>{
       const pct=totalDays?Math.round(cnt[p]/totalDays*100):0;
@@ -977,6 +1097,28 @@ async function buildStatsPage(){
         <div style="font-size:.88rem;font-weight:800;color:${COLORS[p]}">${cnt[p]} días</div>
       </div>`;
     });
+    // ── Ranking fuerza relativa ──
+    // Need pesos loaded for all persons
+    await Promise.all(PERSONS.map(p=>loadPesos(p)));
+    const ratios=PERSONS.map(p=>({p,r:getStrengthRatio(p)})).filter(x=>x.r!==null).sort((a,b)=>b.r-a.r);
+    if(ratios.length){
+      let rhtml='<div class="section-title" style="margin-top:20px">💪 Fuerza relativa</div>';
+      rhtml+='<div style="font-size:.62rem;color:var(--muted);margin-bottom:10px">Promedio de peso levantado ÷ peso corporal</div>';
+      ratios.forEach(({p,r},i)=>{
+        const comment=i<STRENGTH_COMMENTS.length?STRENGTH_COMMENTS[i]:'';
+        const isMe=p===ME;
+        rhtml+=`<div style="background:var(--card);border:1px solid ${isMe?COLORS[p]:' var(--border)'};border-radius:12px;padding:12px 14px;margin-bottom:8px">
+          <div style="display:flex;align-items:center;gap:12px;margin-bottom:${comment?'8':'0'}px">
+            <div style="width:26px;text-align:center;font-size:.75rem;font-weight:900;color:var(--muted)">${i+1}°</div>
+            <div style="width:34px;height:34px;border-radius:50%;background:#1e1e1e;display:flex;align-items:center;justify-content:center;font-weight:900;color:${COLORS[p]}">${PI[p]}</div>
+            <div style="flex:1"><div style="font-size:.83rem;font-weight:700">${p}${isMe?' ●':''}</div></div>
+            <div style="font-size:.95rem;font-weight:900;color:${COLORS[p]}">${r.toFixed(2)}x</div>
+          </div>
+          ${comment?`<div style="font-size:.68rem;color:var(--muted);padding-left:72px;line-height:1.4">${comment}</div>`:''}
+        </div>`;
+      });
+      as.innerHTML+=rhtml;
+    }
   }catch(e){document.getElementById('statsGrid').innerHTML='<div style="color:var(--muted);grid-column:1/-1;text-align:center;padding:20px">Error</div>';}
 }
 
@@ -985,7 +1127,7 @@ function showPage(id){
   ['restView','gymView','pageRutina','pageHistorial','pageStats'].forEach(p=>document.getElementById(p).classList.add('hidden'));
   if(id==='hoy'){
     if(isRest){document.getElementById('restView').classList.remove('hidden');buildRestDay();}
-    else{extraExercises=[];document.getElementById('gymView').classList.remove('hidden');buildWeekStrip();buildAttendance();buildDayExList();}
+    else{document.getElementById('gymView').classList.remove('hidden');buildWeekStrip();buildAttendance();buildDayExList();}
   }else{
     document.getElementById(id).classList.remove('hidden');
     if(id==='pageRutina')buildRutinaPage();
