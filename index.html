@@ -232,7 +232,6 @@ header{background:#0d0d0d;padding:8px 18px;border-bottom:1px solid var(--border)
       </div>
     </div>
   </div>
-  <div id="pageRutina" class="hidden"><div class="page-inner"><div class="section-title">Rutina completa</div><div id="rutinaFull"></div></div></div>
   <div id="pageHistorial" class="hidden">
     <div class="page-inner">
       <div class="section-title">Historial & Progresión</div>
@@ -252,7 +251,6 @@ header{background:#0d0d0d;padding:8px 18px;border-bottom:1px solid var(--border)
 
 <nav class="nav-bar hidden" id="navBar">
   <div class="nav-item active" data-page="hoy" onclick="switchPage(this)"><span class="nav-icon">🏠</span><span class="nav-label">Hoy</span></div>
-  <div class="nav-item" data-page="pageRutina" onclick="switchPage(this)"><span class="nav-icon">📅</span><span class="nav-label">Rutina</span></div>
   <div class="nav-item" data-page="pageHistorial" onclick="switchPage(this)"><span class="nav-icon">📈</span><span class="nav-label">Historial</span></div>
   <div class="nav-item" data-page="pageStats" onclick="switchPage(this)"><span class="nav-icon">📊</span><span class="nav-label">Stats</span></div>
 </nav>
@@ -978,27 +976,100 @@ function renderMultiChart(exKey){
     ${svgHtml}${legend}`;
 }
 
+function renderStrengthRatioChart(){
+  // Para cada persona, calculamos la fuerza relativa por fecha
+  // Tomamos todas las fechas donde hay datos de algún STRENGTH_EX y peso corporal
+  const chartEl=document.getElementById('todosChart');
+  if(!chartEl)return;
+
+  // Recopilar todos los puntos: por persona, por fecha, el ratio promedio
+  const personData={};
+  PERSONS.forEach(p=>{
+    const bwHist=getPesoHistorial(p,'Peso corporal');
+    if(!bwHist.length)return;
+    // para cada fecha con peso corporal, calcular ratio con los pesos de ejercicio más recientes hasta esa fecha
+    const fechasPuntos=[];
+    bwHist.forEach(bwEntry=>{
+      const bw=+bwEntry.peso_kg;
+      if(!bw)return;
+      let sum=0,count=0;
+      STRENGTH_EX.forEach(ex=>{
+        const h=getPesoHistorial(p,ex).filter(e=>e.fecha<=bwEntry.fecha);
+        if(h.length){sum+=(+h[0].peso_kg/bw);count++;}
+      });
+      if(count>0)fechasPuntos.push({fecha:bwEntry.fecha,ratio:+(sum/count).toFixed(3)});
+    });
+    if(fechasPuntos.length)personData[p]=fechasPuntos.sort((a,b)=>a.fecha.localeCompare(b.fecha));
+  });
+
+  const persons=Object.keys(personData);
+  if(!persons.length){
+    chartEl.innerHTML='<div style="text-align:center;padding:30px;color:var(--muted);font-size:.8rem">Sin suficientes datos todavía.<br><span style="font-size:.7rem">Se necesita peso corporal + al menos un ejercicio de fuerza.</span></div>';
+    return;
+  }
+
+  const W=320,H=120,PL=36,PR=8,PT=10,PB=20;
+  const cW=W-PL-PR,cH=H-PT-PB;
+  const allDates=[...new Set(persons.flatMap(p=>personData[p].map(d=>d.fecha)))].sort();
+  const allRatios=persons.flatMap(p=>personData[p].map(d=>d.ratio));
+  const mn=Math.min(...allRatios)*0.92,mx=Math.max(...allRatios)*1.08;
+  const dateTimes=allDates.map(d=>new Date(d).getTime());
+  const minT=dateTimes[0],maxT=dateTimes[dateTimes.length-1];
+  const xS=fecha=>{const t=new Date(fecha).getTime();return maxT===minT?cW/2:((t-minT)/(maxT-minT))*cW;};
+  const yS=r=>mx===mn?cH/2:cH-((r-mn)/(mx-mn))*cH;
+
+  const lines=persons.map(p=>{
+    const color=COLORS[p];
+    const pts=personData[p].map(d=>({x:xS(d.fecha)+PL,y:yS(d.ratio)+PT,d}));
+    const pathD=pts.map((pt,i)=>i===0?`M${pt.x},${pt.y}`:`L${pt.x},${pt.y}`).join(' ');
+    const dots=pts.map((pt,i)=>`<circle cx="${pt.x}" cy="${pt.y}" r="${i===pts.length-1?3.5:2.5}" fill="${i===pts.length-1?color:'#111'}" stroke="${color}" stroke-width="1.2"/>`).join('');
+    return`<path d="${pathD}" fill="none" stroke="${color}" stroke-width="1.8" stroke-linejoin="round" stroke-linecap="round" opacity="0.9"/>${dots}`;
+  }).join('');
+
+  const yLabels=[mn,mx].map(r=>`<text x="${PL-4}" y="${yS(r)+PT+3}" text-anchor="end" font-size="7" fill="#555">${r.toFixed(2)}x</text>`).join('');
+  const xLabels=allDates.length>=2
+    ?`<text x="${PL}" y="${H-2}" text-anchor="middle" font-size="7" fill="#555">${allDates[0].slice(5)}</text><text x="${W-PR}" y="${H-2}" text-anchor="end" font-size="7" fill="#555">${allDates[allDates.length-1].slice(5)}</text>`:'';
+  const svgHtml=`<svg viewBox="0 0 ${W} ${H}" style="width:100%;overflow:visible;margin:8px 0 4px">${yLabels}${xLabels}${lines}</svg>`;
+
+  // legend ordenada por último ratio desc
+  const sorted=[...persons].sort((a,b)=>personData[b][personData[b].length-1].ratio-personData[a][personData[a].length-1].ratio);
+  const legend=sorted.map((p,i)=>{
+    const last=personData[p][personData[p].length-1];
+    return`<div style="display:flex;align-items:center;gap:8px;padding:5px 0;border-bottom:1px solid var(--border)">
+      <span style="font-size:.65rem;color:var(--muted);min-width:14px;text-align:center">${i+1}°</span>
+      <div style="width:8px;height:8px;border-radius:50%;background:${COLORS[p]};flex-shrink:0"></div>
+      <span style="font-size:.78rem;font-weight:700;flex:1">${p}</span>
+      <span style="font-size:.78rem;color:${COLORS[p]};font-weight:800">${last.ratio.toFixed(2)}x</span>
+    </div>`;
+  }).join('');
+
+  chartEl.innerHTML=`
+    <div style="font-size:.6rem;letter-spacing:1.5px;text-transform:uppercase;color:var(--accent);font-weight:700;margin-bottom:2px">💪 Fuerza relativa — evolución</div>
+    <div style="font-size:.6rem;color:var(--muted);margin-bottom:4px">Peso levantado ÷ peso corporal (promedio de ejercicios clave)</div>
+    ${svgHtml}${legend}`;
+}
+
 async function buildHistTodos(content){
   content.innerHTML='<div class="loading"><span class="spin">⏳</span>Cargando todos...</div>';
   await Promise.all(PERSONS.map(p=>loadPesos(p)));
   const allKeys=getAllExerciseKeys();
-  if(!histTodosEx)histTodosEx=allKeys[0]?.key||null;
   const allKeysSorted=allKeys.map(({key,label,day})=>({key,label,muscle:ROUTINE[day].muscle}));
   content.innerHTML=`
+    <div style="background:var(--card);border:1px solid var(--border);border-radius:14px;padding:14px 16px;margin-bottom:14px" id="todosChart">
+      <div style="color:var(--muted);font-size:.78rem">Cargando gráfico...</div>
+    </div>
+    <div style="font-size:.6rem;letter-spacing:1.5px;text-transform:uppercase;color:var(--muted);font-weight:700;margin-bottom:8px">Comparar ejercicio específico</div>
     <div style="position:relative;margin-bottom:8px">
       <div style="display:flex;gap:8px">
-        <input id="exSearch" type="text" placeholder="🔍  Buscar ejercicio..." autocomplete="off"
+        <input id="exSearch" type="text" placeholder="🔍  Buscar ejercicio para comparar..." autocomplete="off"
           style="flex:1;background:var(--card2);border:1.5px solid var(--border);border-radius:10px;padding:10px 14px;font-size:.82rem;color:var(--text);font-family:'Inter',sans-serif;outline:none"
           oninput="filterExSearch()" onfocus="this.style.borderColor='var(--accent)';filterExSearch()" onblur="this.style.borderColor='var(--border)'"/>
-        <button onclick="document.getElementById('exSearch').value='';filterExSearch();document.getElementById('exSearch').focus()" style="background:var(--card2);color:var(--muted);border:1.5px solid var(--border);border-radius:10px;padding:0 14px;font-size:1rem;cursor:pointer;font-family:'Inter',sans-serif;line-height:1">✕</button>
+        <button onclick="document.getElementById('exSearch').value='';document.getElementById('exSearchResults').style.display='none';renderStrengthRatioChart()" style="background:var(--card2);color:var(--muted);border:1.5px solid var(--border);border-radius:10px;padding:0 14px;font-size:1rem;cursor:pointer;font-family:'Inter',sans-serif;line-height:1">✕</button>
       </div>
       <div id="exSearchResults" style="display:none;background:var(--card);border:1px solid var(--border);border-radius:10px;margin-top:4px;overflow:hidden;max-height:260px;overflow-y:auto"></div>
-    </div>
-    <div style="background:var(--card);border:1px solid var(--border);border-radius:14px;padding:14px 16px;margin-bottom:10px" id="todosChart">
-      <div style="color:var(--muted);font-size:.78rem">Buscá o tocá "Ver todos" para elegir un ejercicio 👆</div>
     </div>`;
   window._allKeysSorted=allKeysSorted;
-  if(histTodosEx)renderMultiChart(histTodosEx);
+  renderStrengthRatioChart();
 }
 function filterExSearch(){
   const q=document.getElementById('exSearch').value.toLowerCase().trim();
@@ -1009,7 +1080,8 @@ function filterExSearch(){
   res.innerHTML=filtered.map(({key,label,muscle})=>{
     const active=key===histTodosEx;
     const safeKey=key.replace(/'/g,"\\'");
-    return`<div onclick="histTodosEx='${safeKey}';document.getElementById('exSearch').value='${label}';document.getElementById('exSearchResults').style.display='none';renderMultiChart('${safeKey}')"
+    const safeLabel=label.replace(/'/g,"\\'");
+    return`<div onclick="histTodosEx='${safeKey}';document.getElementById('exSearch').value='${safeLabel}';document.getElementById('exSearchResults').style.display='none';renderMultiChart('${safeKey}')"
       style="padding:9px 14px;cursor:pointer;border-bottom:1px solid var(--border);background:${active?'#0c1a14':'transparent'};display:flex;justify-content:space-between;align-items:center">
       <span style="font-size:.8rem;font-weight:${active?'800':'600'};color:${active?'var(--accent)':'var(--text)'}">${label}</span>
       <span style="font-size:.6rem;color:var(--muted)">${muscle}</span>
@@ -1244,13 +1316,12 @@ async function buildStatsPage(){
 
 // ── NAV ───────────────────────────────────────────────────
 function showPage(id){
-  ['restView','gymView','pageRutina','pageHistorial','pageStats'].forEach(p=>document.getElementById(p).classList.add('hidden'));
+  ['restView','gymView','pageHistorial','pageStats'].forEach(p=>document.getElementById(p).classList.add('hidden'));
   if(id==='hoy'){
     if(isRest){document.getElementById('restView').classList.remove('hidden');buildRestDay();}
     else{document.getElementById('gymView').classList.remove('hidden');buildWeekStrip();buildAttendance();buildDayExList();}
   }else{
     document.getElementById(id).classList.remove('hidden');
-    if(id==='pageRutina')buildRutinaPage();
     if(id==='pageHistorial')buildHistPage();
     if(id==='pageStats')buildStatsPage();
   }
