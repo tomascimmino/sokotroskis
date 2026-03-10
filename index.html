@@ -948,14 +948,20 @@ function renderMultiChart(exKey){
   const yS=w=>mx===mn?cH/2:cH-((w-mn)/(mx-mn))*cH;
   const lines=persons.map(p=>{
     const color=COLORS[p];
-    const pts=allData[p].map(d=>({x:xS(allDates.indexOf(d.fecha))+PL,y:yS(+d.peso_kg)+PT}));
+    const pts=allData[p].map(d=>({x:xS(allDates.indexOf(d.fecha))+PL,y:yS(+d.peso_kg)+PT,fecha:d.fecha,peso:d.peso_kg}));
     const pathD=pts.map((pt,i)=>i===0?`M${pt.x},${pt.y}`:`L${pt.x},${pt.y}`).join(' ');
-    const dots=pts.map((pt,i)=>`<circle cx="${pt.x}" cy="${pt.y}" r="${i===pts.length-1?3.5:2.5}" fill="${i===pts.length-1?color:'#111'}" stroke="${color}" stroke-width="1.2"/>`).join('');
+    const dots=pts.map((pt,i)=>`<circle cx="${pt.x}" cy="${pt.y}" r="${i===pts.length-1?3.5:2.5}" fill="${i===pts.length-1?color:'#111'}" stroke="${color}" stroke-width="1.2" data-p="${p}" data-fecha="${pt.fecha}" data-peso="${pt.peso}" style="cursor:pointer"/>`).join('');
     return`<path d="${pathD}" fill="none" stroke="${color}" stroke-width="1.8" stroke-linejoin="round" stroke-linecap="round" opacity="0.9"/>${dots}`;
   }).join('');
   const yLabels=[mn+2,mx-2].map(w=>`<text x="${PL-4}" y="${yS(w)+PT+3}" text-anchor="end" font-size="7" fill="#555">${w.toFixed(0)}</text>`).join('');
   const xLabels=allDates.length>=2?`<text x="${PL}" y="${H-2}" text-anchor="middle" font-size="7" fill="#555">${allDates[0].slice(5)}</text><text x="${W-PR}" y="${H-2}" text-anchor="end" font-size="7" fill="#555">${allDates[allDates.length-1].slice(5)}</text>`:'';
-  const svgHtml=`<svg viewBox="0 0 ${W} ${H}" style="width:100%;overflow:visible;margin:8px 0 4px">${yLabels}${xLabels}${lines}</svg>`;
+  const mcWrapId='mcWrap';
+  const mcTipId='mcTip';
+  const svgHtml=`
+    <div style="position:relative" id="${mcWrapId}">
+      <svg viewBox="0 0 ${W} ${H}" style="width:100%;overflow:visible;margin:8px 0 4px">${yLabels}${xLabels}${lines}</svg>
+      <div id="${mcTipId}" style="position:absolute;background:#1a1a1a;border:1px solid #555;border-radius:8px;padding:6px 10px;font-size:.68rem;pointer-events:none;opacity:0;transition:opacity .15s;white-space:nowrap;z-index:10;top:0;left:0"></div>
+    </div>`;
   const sorted=[...persons].sort((a,b)=>+allData[b][allData[b].length-1].peso_kg - +allData[a][allData[a].length-1].peso_kg);
   const legend=sorted.map(p=>{
     const last=allData[p][allData[p].length-1];
@@ -968,6 +974,27 @@ function renderMultiChart(exKey){
   chartEl.innerHTML=`
     <div style="font-size:.62rem;letter-spacing:1.5px;text-transform:uppercase;color:var(--accent);font-weight:700;margin-bottom:6px">${exKey}</div>
     ${svgHtml}${legend}`;
+  requestAnimationFrame(()=>{
+    const wrap=document.getElementById(mcWrapId);
+    const tip=document.getElementById(mcTipId);
+    if(!wrap||!tip)return;
+    wrap.querySelectorAll('circle[data-p]').forEach(dot=>{
+      const show=()=>{
+        const p=dot.dataset.p;
+        const color=COLORS[p]||'#fff';
+        tip.style.borderColor=color;
+        tip.innerHTML=`<span style="color:#888;font-size:.6rem">${dot.dataset.fecha}</span><br><strong style="color:${color};font-size:.85rem">${dot.dataset.peso} kg</strong><br><span style="color:var(--muted);font-size:.6rem">${p}</span>`;
+        const wr=wrap.getBoundingClientRect(),dr=dot.getBoundingClientRect();
+        let l=dr.left-wr.left-40,t=dr.top-wr.top-64;
+        if(l<0)l=0;if(l>wr.offsetWidth-120)l=wr.offsetWidth-120;
+        if(t<0)t=4;
+        tip.style.left=l+'px';tip.style.top=t+'px';tip.style.opacity='1';
+      };
+      dot.addEventListener('mouseenter',show);
+      dot.addEventListener('touchstart',e=>{e.preventDefault();show();setTimeout(()=>tip.style.opacity='0',2200);},{passive:false});
+      dot.addEventListener('mouseleave',()=>tip.style.opacity='0');
+    });
+  });
 }
 
 function renderStrengthRatioChart(){
