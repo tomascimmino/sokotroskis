@@ -318,6 +318,10 @@ header{background:#0d0d0d;padding:8px 18px;border-bottom:1px solid var(--border)
   <div id="pageStats" class="hidden">
     <div class="page-inner">
       <div class="section-title">Estadísticas del grupo</div>
+      <div style="display:flex;gap:8px;margin-bottom:16px;justify-content:center">
+  <button id="statsMesBtn" class="stats-tab active" onclick="cambiarStatsPeriodo('mes')" style="background:var(--card2);border:1.5px solid var(--border);border-radius:8px;padding:6px 12px;font-size:.7rem;font-weight:700;cursor:pointer;font-family:'Inter',sans-serif">📅 Este mes</button>
+  <button id="statsHistoricoBtn" class="stats-tab" onclick="cambiarStatsPeriodo('historico')" style="background:var(--card2);border:1.5px solid var(--border);border-radius:8px;padding:6px 12px;font-size:.7rem;font-weight:700;cursor:pointer;font-family:'Inter',sans-serif">🏆 Histórico</button>
+</div>
       <div class="stats-grid" id="statsGrid" style="margin-bottom:20px"></div>
       <div class="section-title">Asistencia por persona</div>
       <div id="attendStats"></div>
@@ -474,9 +478,13 @@ const savedRutina = localStorage.getItem('sokoRutina');
 if (savedRutina && ['Piernas + Hombro','Pecho + Bíceps','Espalda + Tríceps','Hombro + Piernas','Descanso'].includes(savedRutina)) {
   selectedRutina = savedRutina;
 }
+
 let histP = null;
 const _histEx = {};
 const selVariant = {};
+let statsPeriodo = 'mes';
+let statsCache = { mes: null, historico: null };
+
 
 function getRutinaDelDiaReal() {
   if (todayDay === 'Lunes') return 'Piernas + Hombro';
@@ -1577,22 +1585,60 @@ async function buildHistPage(){
 
 // ── STATS ─────────────────────────────────────────────────
 async function buildStatsPage(){
-  document.getElementById('statsGrid').innerHTML='<div class="loading" style="grid-column:1/-1"><span class="spin">⏳</span></div>';
-  try{
-    const data=await api({action:'getAsistenciaMes',mes:todayStr.slice(0,7)});
-    const cnt={};PERSONS.forEach(p=>{cnt[p]=0;});
-    if(Array.isArray(data))data.forEach(row=>PERSONS.forEach(p=>{if(row[p.toLowerCase()]===1||row[p.toLowerCase()]==='1')cnt[p]++;}));
-    const totalDays=Array.isArray(data)?data.length:0;
-    const avg=totalDays?(Object.values(cnt).reduce((a,b)=>a+b,0)/totalDays).toFixed(1):0;
-    const sinNadie=Array.isArray(data)?data.filter(row=>PERSONS.every(p=>!(row[p.toLowerCase()]===1||row[p.toLowerCase()]==='1'))).length:0;
-    document.getElementById('statsGrid').innerHTML=`
-      <div class="stat-card"><div class="stat-n">${totalDays}</div><div class="stat-l">Días este mes</div></div>
+  const statsGrid = document.getElementById('statsGrid');
+  const attendStats = document.getElementById('attendStats');
+  
+  statsGrid.innerHTML = '<div class="loading" style="grid-column:1/-1"><span class="spin">⏳</span></div>';
+  attendStats.innerHTML = '';
+  
+  try {
+    let data, totalDays;
+    
+    if (statsPeriodo === 'mes') {
+      if (statsCache.mes) {
+        data = statsCache.mes;
+        totalDays = data.length;
+      } else {
+        const mesActual = todayStr.slice(0,7);
+        data = await api({action:'getAsistenciaMes', mes:mesActual});
+        statsCache.mes = data;
+        totalDays = data.length;
+      }
+    } else {
+      if (statsCache.historico) {
+        data = statsCache.historico;
+        totalDays = data.length;
+      } else {
+        data = await api({action:'getAsistenciaTotal'});
+        statsCache.historico = data;
+        totalDays = data.length;
+      }
+    }
+    
+    const cnt = {};
+    PERSONS.forEach(p => { cnt[p] = 0; });
+    
+    if (Array.isArray(data)) {
+      data.forEach(row => {
+        PERSONS.forEach(p => {
+          const val = row[p.toLowerCase()];
+          if (val === 1 || val === '1') cnt[p]++;
+        });
+      });
+    }
+    
+    const avg = totalDays ? (Object.values(cnt).reduce((a,b)=>a+b,0) / totalDays).toFixed(1) : 0;
+    const sinNadie = Array.isArray(data) ? data.filter(row => PERSONS.every(p => !(row[p.toLowerCase()]===1 || row[p.toLowerCase()]==='1'))).length : 0;
+    
+    statsGrid.innerHTML = `
+      <div class="stat-card"><div class="stat-n">${totalDays}</div><div class="stat-l">${statsPeriodo === 'mes' ? 'Días este mes' : 'Total días'}</div></div>
       <div class="stat-card"><div class="stat-n">${avg}</div><div class="stat-l">Promedio asistentes</div></div>
       <div class="stat-card"><div class="stat-n">${sinNadie}</div><div class="stat-l">Días sin nadie</div></div>`;
-    const as=document.getElementById('attendStats');as.innerHTML='';
-    [...PERSONS].sort((a,b)=>cnt[b]-cnt[a]).forEach(p=>{
-      const pct=totalDays?Math.round(cnt[p]/totalDays*100):0;
-      as.innerHTML+=`<div style="background:var(--card);border:1px solid var(--border);border-radius:12px;padding:12px 14px;margin-bottom:8px;display:flex;align-items:center;gap:12px">
+    
+    attendStats.innerHTML = '';
+    [...PERSONS].sort((a,b) => cnt[b] - cnt[a]).forEach(p => {
+      const pct = totalDays ? Math.round(cnt[p] / totalDays * 100) : 0;
+      attendStats.innerHTML += `<div style="background:var(--card);border:1px solid var(--border);border-radius:12px;padding:12px 14px;margin-bottom:8px;display:flex;align-items:center;gap:12px">
         <div style="width:34px;height:34px;border-radius:50%;background:#1e1e1e;display:flex;align-items:center;justify-content:center;font-weight:900;color:${COLORS[p]}">${PI[p]}</div>
         <div style="flex:1"><div style="font-size:.83rem;font-weight:700">${p}${p===ME?' ●':''}</div>
           <div style="background:var(--border);border-radius:4px;height:4px;margin-top:6px"><div style="background:${COLORS[p]};border-radius:4px;height:4px;width:${pct}%"></div></div>
@@ -1600,27 +1646,47 @@ async function buildStatsPage(){
         <div style="font-size:.88rem;font-weight:800;color:${COLORS[p]}">${cnt[p]} días</div>
       </div>`;
     });
-    await Promise.all(PERSONS.map(p=>loadPesos(p)));
-    const ratios=PERSONS.map(p=>({p,r:getStrengthRatio(p)})).filter(x=>x.r!==null).sort((a,b)=>b.r-a.r);
-    if(ratios.length){
-      let rhtml='<div class="section-title" style="margin-top:20px">💪 Fuerza relativa</div>';
-      rhtml+='<div style="font-size:.62rem;color:var(--muted);margin-bottom:10px">Promedio de peso levantado ÷ peso corporal (5 ejercicios compuestos)</div>';
-      ratios.forEach(({p,r},i)=>{
-        const comment=i<STRENGTH_COMMENTS.length?STRENGTH_COMMENTS[i]:'';
-        const isMe=p===ME;
-        rhtml+=`<div style="background:var(--card);border:1px solid ${isMe?COLORS[p]:' var(--border)'};border-radius:12px;padding:12px 14px;margin-bottom:8px">
-          <div style="display:flex;align-items:center;gap:12px;margin-bottom:${comment?'8':'0'}px">
+    
+    // Fuerza relativa
+    await Promise.all(PERSONS.map(p => loadPesos(p)));
+    const ratios = PERSONS.map(p => ({p, r: getStrengthRatio(p)})).filter(x => x.r !== null).sort((a,b) => b.r - a.r);
+    if (ratios.length && !document.getElementById('fuerzaRelativaSection')) {
+      const fuerzaSection = document.createElement('div');
+      fuerzaSection.id = 'fuerzaRelativaSection';
+      let rhtml = '<div class="section-title" style="margin-top:20px">💪 Fuerza relativa</div>';
+      rhtml += '<div style="font-size:.62rem;color:var(--muted);margin-bottom:10px">Promedio de peso levantado ÷ peso corporal (5 ejercicios compuestos)</div>';
+      ratios.forEach(({p,r}, i) => {
+        const comment = i < STRENGTH_COMMENTS.length ? STRENGTH_COMMENTS[i] : '';
+        const isMe = p === ME;
+        rhtml += `<div style="background:var(--card);border:1px solid ${isMe ? COLORS[p] : ' var(--border)'};border-radius:12px;padding:12px 14px;margin-bottom:8px">
+          <div style="display:flex;align-items:center;gap:12px;margin-bottom:${comment ? '8' : '0'}px">
             <div style="width:26px;text-align:center;font-size:.75rem;font-weight:900;color:var(--muted)">${i+1}°</div>
             <div style="width:34px;height:34px;border-radius:50%;background:#1e1e1e;display:flex;align-items:center;justify-content:center;font-weight:900;color:${COLORS[p]}">${PI[p]}</div>
-            <div style="flex:1"><div style="font-size:.83rem;font-weight:700">${p}${isMe?' ●':''}</div></div>
+            <div style="flex:1"><div style="font-size:.83rem;font-weight:700">${p}${isMe ? ' ●' : ''}</div></div>
             <div style="font-size:.95rem;font-weight:900;color:${COLORS[p]}">${r.toFixed(2)}x</div>
           </div>
-          ${comment?`<div style="font-size:.68rem;color:var(--muted);padding-left:72px;line-height:1.4">${comment}</div>`:''}
+          ${comment ? `<div style="font-size:.68rem;color:var(--muted);padding-left:72px;line-height:1.4">${comment}</div>` : ''}
         </div>`;
       });
-      as.innerHTML+=rhtml;
+      fuerzaSection.innerHTML = rhtml;
+      attendStats.appendChild(fuerzaSection);
     }
-  }catch(e){document.getElementById('statsGrid').innerHTML='<div style="color:var(--muted);grid-column:1/-1;text-align:center;padding:20px">Error</div>';}
+    
+  } catch(e) {
+    console.error(e);
+    statsGrid.innerHTML = '<div style="color:var(--muted);grid-column:1/-1;text-align:center;padding:20px">Error</div>';
+  }
+}
+
+function cambiarStatsPeriodo(periodo) {
+  statsPeriodo = periodo;
+  document.querySelectorAll('.stats-tab').forEach(btn => btn.classList.remove('active'));
+  if (periodo === 'mes') {
+    document.getElementById('statsMesBtn').classList.add('active');
+  } else {
+    document.getElementById('statsHistoricoBtn').classList.add('active');
+  }
+  buildStatsPage();
 }
 
 // ── NAV ───────────────────────────────────────────────────
