@@ -323,39 +323,11 @@ header{background:#0d0d0d;padding:8px 18px;border-bottom:1px solid var(--border)
       <div id="attendStats"></div>
     </div>
   </div>
-<!-- PÁGINA RELOJ -->
-<div id="pageReloj" class="hidden">
-  <div class="page-inner">
-    <div class="section-title">⏱️ Cronómetro de entrenamiento</div>
-    <div style="background:var(--card);border:1px solid var(--border);border-radius:18px;padding:24px;text-align:center;margin-bottom:20px">
-      <div id="cronoDisplay" style="font-size:3.5rem;font-weight:900;font-family:monospace;letter-spacing:4px;color:var(--accent);margin-bottom:20px">00:00:00</div>
-      <div style="display:flex;gap:12px;justify-content:center">
-        <button id="cronoStart" class="bw-btn" style="background:var(--accent);color:#000;padding:12px 24px;font-size:1rem">▶ Iniciar</button>
-        <button id="cronoPause" class="bw-btn" style="background:var(--card2);border:1.5px solid var(--border);color:var(--text);padding:12px 24px;font-size:1rem">⏸ Pausa</button>
-        <button id="cronoReset" class="bw-btn" style="background:var(--card2);border:1.5px solid var(--border);color:var(--text);padding:12px 24px;font-size:1rem">🔄 Reiniciar</button>
-      </div>
-    </div>
-
-    <div class="section-title">⏲️ Timer de descanso (3 min)</div>
-    <div style="background:var(--card);border:1px solid var(--border);border-radius:18px;padding:24px;text-align:center">
-      <div id="timerDisplay" style="font-size:3rem;font-weight:900;font-family:monospace;letter-spacing:4px;color:#f59e0b;margin-bottom:20px">03:00</div>
-      <div style="display:flex;gap:12px;justify-content:center">
-        <button id="timerStart" class="bw-btn" style="background:var(--accent);color:#000;padding:12px 24px;font-size:1rem">⏲️ Iniciar</button>
-        <button id="timerStop" class="bw-btn" style="background:var(--card2);border:1.5px solid var(--border);color:var(--text);padding:12px 24px;font-size:1rem">⏹️ Detener</button>
-        <button id="timerReset" class="bw-btn" style="background:var(--card2);border:1.5px solid var(--border);color:var(--text);padding:12px 24px;font-size:1rem">🔄 Reset</button>
-      </div>
-      <div id="timerStatus" style="margin-top:16px;font-size:.75rem;color:var(--muted)">Listo</div>
-    </div>
-  </div>
-</div>
-</div>
-</div>
 
 <nav class="nav-bar hidden" id="navBar">
   <div class="nav-item active" data-page="hoy" onclick="switchPage(this)"><span class="nav-icon">🏠</span><span class="nav-label">Hoy</span></div>
   <div class="nav-item" data-page="pageHistorial" onclick="switchPage(this)"><span class="nav-icon">📈</span><span class="nav-label">Historial</span></div>
   <div class="nav-item" data-page="pageStats" onclick="switchPage(this)"><span class="nav-icon">📊</span><span class="nav-label">Stats</span></div>
-  <div class="nav-item" data-page="pageReloj" onclick="switchPage(this)"><span class="nav-icon">⏱️</span><span class="nav-label">Reloj</span></div>
 </nav>
 
 <div class="modal-overlay" id="modalOverlay">
@@ -1651,110 +1623,9 @@ async function buildStatsPage(){
   }catch(e){document.getElementById('statsGrid').innerHTML='<div style="color:var(--muted);grid-column:1/-1;text-align:center;padding:20px">Error</div>';}
 }
 
-// ── CRONÓMETRO ───────────────────────────────────────────
-let cronoSegundos = 0;
-let cronoInterval = null;
-const cronoDisplay = document.getElementById('cronoDisplay');
-const cronoStart = document.getElementById('cronoStart');
-const cronoPause = document.getElementById('cronoPause');
-const cronoReset = document.getElementById('cronoReset');
-
-function actualizarCronoDisplay() {
-  const horas = Math.floor(cronoSegundos / 3600);
-  const minutos = Math.floor((cronoSegundos % 3600) / 60);
-  const segundos = cronoSegundos % 60;
-  cronoDisplay.textContent = `${String(horas).padStart(2,'0')}:${String(minutos).padStart(2,'0')}:${String(segundos).padStart(2,'0')}`;
-}
-
-function iniciarCrono() {
-  if (cronoInterval) return;
-  cronoInterval = setInterval(() => {
-    cronoSegundos++;
-    actualizarCronoDisplay();
-  }, 1000);
-}
-
-function pausarCrono() {
-  if (cronoInterval) {
-    clearInterval(cronoInterval);
-    cronoInterval = null;
-  }
-}
-
-function reiniciarCrono() {
-  pausarCrono();
-  cronoSegundos = 0;
-  actualizarCronoDisplay();
-}
-
-if (cronoStart) cronoStart.onclick = iniciarCrono;
-if (cronoPause) cronoPause.onclick = pausarCrono;
-if (cronoReset) cronoReset.onclick = reiniciarCrono;
-
-// ── TIMER 3 MINUTOS ──────────────────────────────────────
-let timerSegundos = 180; // 3 minutos = 180 segundos
-let timerInterval = null;
-const timerDisplay = document.getElementById('timerDisplay');
-const timerStart = document.getElementById('timerStart');
-const timerStop = document.getElementById('timerStop');
-const timerReset = document.getElementById('timerReset');
-const timerStatus = document.getElementById('timerStatus');
-
-function actualizarTimerDisplay() {
-  const minutos = Math.floor(timerSegundos / 60);
-  const segundos = timerSegundos % 60;
-  timerDisplay.textContent = `${String(minutos).padStart(2,'0')}:${String(segundos).padStart(2,'0')}`;
-  if (timerSegundos === 0) {
-    detenerTimer();
-    timerStatus.textContent = '✅ ¡Tiempo cumplido!';
-    timerDisplay.style.color = '#2ecc71';
-  } else {
-    timerStatus.textContent = timerInterval ? '⏳ Descansando...' : 'Detenido';
-  }
-}
-
-function iniciarTimer() {
-  detenerTimer();
-  if (timerSegundos === 0) {
-    resetearTimer();
-  }
-  timerInterval = setInterval(() => {
-    if (timerSegundos > 0) {
-      timerSegundos--;
-      actualizarTimerDisplay();
-    } else {
-      detenerTimer();
-      timerDisplay.style.color = '#2ecc71';
-      timerStatus.textContent = '✅ ¡Tiempo cumplido!';
-    }
-  }, 1000);
-  timerDisplay.style.color = '#f59e0b';
-  timerStatus.textContent = '⏳ Descansando...';
-}
-
-function detenerTimer() {
-  if (timerInterval) {
-    clearInterval(timerInterval);
-    timerInterval = null;
-  }
-  timerStatus.textContent = 'Detenido';
-}
-
-function resetearTimer() {
-  detenerTimer();
-  timerSegundos = 180;
-  actualizarTimerDisplay();
-  timerDisplay.style.color = '#f59e0b';
-  timerStatus.textContent = 'Listo';
-}
-
-if (timerStart) timerStart.onclick = iniciarTimer;
-if (timerStop) timerStop.onclick = detenerTimer;
-if (timerReset) timerReset.onclick = resetearTimer;
-
 // ── NAV ───────────────────────────────────────────────────
 function showPage(id){
-  ['restView','gymView','pageHistorial','pageStats','pageReloj'].forEach(p=>document.getElementById(p).classList.add('hidden'));
+  ['restView','gymView','pageHistorial','pageStats'].forEach(p=>document.getElementById(p).classList.add('hidden'));
   if(id==='hoy'){
     if (isRest) {
       document.getElementById('restView').classList.remove('hidden');
