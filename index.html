@@ -239,6 +239,27 @@ header{background:#0d0d0d;padding:8px 18px;border-bottom:1px solid var(--border)
   margin-top: 4px;
 }
 
+.rutina-option {
+  background: var(--card);
+  border: 1.5px solid var(--border);
+  border-radius: 12px;
+  padding: 8px 12px;
+  font-size: .7rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.2s;
+  color: var(--text);
+}
+.rutina-option:hover {
+  border-color: var(--accent);
+  background: #0c1a14;
+}
+.rutina-option.active {
+  border-color: var(--accent);
+  background: #0c1a14;
+  color: var(--accent);
+}
+
 </style>
 </head>
 <body>
@@ -261,16 +282,17 @@ header{background:#0d0d0d;padding:8px 18px;border-bottom:1px solid var(--border)
     </div>
   </header>
   <div class="day-banner" id="dayBanner"></div>
-  <div style="display:flex;justify-content:space-between;align-items:center;padding:8px 16px 0 16px">
-  <span id="diaActualBadge" style="background:var(--accent);color:#000;border-radius:8px;padding:4px 10px;font-size:.65rem;font-weight:800">HOY: <span id="diaRealLabel">Lunes</span></span>
-  <button id="cambiarDiaBtnGlobal" style="background:var(--card2);border:1.5px solid var(--border);border-radius:8px;padding:6px 12px;font-size:.7rem;font-weight:700;color:var(--text);cursor:pointer;font-family:'Inter',sans-serif">🎮 CAMBIAR DÍA</button>
-</div>
-  <div id="restView" class="hidden"></div>
+  <div style="padding:8px 16px 0 16px">
+  <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px">
+      </div>
+    <div id="restView" class="hidden"></div>
   <div id="gymView" class="hidden">
   
     <div class="section" style="padding:16px 16px 0">
-      <div class="section-title">Esta semana</div>
+      <div class="section-title">Hoy hacemos...</div>
       <div class="week-strip" id="weekStrip"></div>
+      <div style="text-align:center;margin-top:8px">
+</div>
     </div>
     <div style="padding:0 16px">
       <div class="section" style="margin-top:20px">
@@ -284,7 +306,7 @@ header{background:#0d0d0d;padding:8px 18px;border-bottom:1px solid var(--border)
         <div id="bwCardHoy"></div>
         <div class="day-exercises" id="dayExList"></div>
       </div>
-    </div>
+          </div>
   </div>
   <div id="pageHistorial" class="hidden">
     <div class="page-inner">
@@ -326,19 +348,8 @@ header{background:#0d0d0d;padding:8px 18px;border-bottom:1px solid var(--border)
     </div>
   </div>
 </div>
-<!-- MODAL SELECCIONAR DÍA -->
-<div id="modalDias" class="modal-overlay" style="z-index:200">
-  <div class="modal" style="max-width:360px">
-    <h3>🎮 Elegí qué día entrenás</h3>
-    <div class="msub" style="margin-bottom:16px">Podés seleccionar cualquier grupo muscular</div>
-    <div id="diasSelectorGrid" style="display:grid;grid-template-columns:repeat(2,1fr);gap:10px;margin-bottom:20px"></div>
-    <button id="btnResetDia" style="width:100%;background:var(--card2);border:1.5px solid var(--border);border-radius:10px;padding:12px;color:var(--text);font-size:.8rem;font-weight:700;cursor:pointer;margin-bottom:8px">🔄 Volver al día real (hoy)</button>
-    <button class="btn-cancel" onclick="cerrarModalDias()" style="margin-top:0">Cancelar</button>
-  </div>
 </div>
 </div>
-
-
 
 <nav class="nav-bar hidden" id="navBar">
   <div class="nav-item active" data-page="hoy" onclick="switchPage(this)"><span class="nav-icon">🏠</span><span class="nav-label">Hoy</span></div>
@@ -380,7 +391,6 @@ const VARIANTS={
   'Curl martillo':['Mancuerna','Polea']
 };
 
-// ✏️ EDITAR PERFILES AQUÍ
 const PROFILES={
   Fede: {objetivo:'bajar', meta:'Bajar y definir'},
   Toti: {objetivo:'subir', meta:'Ganar masa muscular'},
@@ -389,8 +399,6 @@ const PROFILES={
   Jordan:{objetivo:'subir', meta:'Ganar masa muscular'},
 };
 
-// Ejercicios de referencia para fuerza relativa (los 5 movimientos compuestos más representativos)
-// Se usa la variante con mayor peso registrado para cada persona
 const STRENGTH_EX_BASE=[
   {base:'Press banca', variants:['Press banca - Banco','Press banca - Multipower']},
   {base:'Press militar', variants:['Press militar - Multipower','Press militar - Mancuernas','Press militar - Barra']},
@@ -458,7 +466,7 @@ let cache={asistencia:null,pesos:{},records:null};
 function getAltura(p){return parseFloat(localStorage.getItem('altura_'+p))||null;}
 function setAltura(p,v){localStorage.setItem('altura_'+p,v);}
 
-// Fuerza relativa: usa la variante con mayor peso registrado para cada ejercicio base
+// Fuerza relativa
 function getBestVariantWeight(persona, exDef){
   let best=0;
   exDef.variants.forEach(key=>{
@@ -486,19 +494,156 @@ const todayStr = today.toLocaleDateString('en-CA');
 const isRest = !ROUTINE[todayDay] || ROUTINE[todayDay].exercises.length === 0;
 
 let ME = localStorage.getItem('sokoUser') || null;
-let selectedDay = null; // null = usar el día real
-let diaReal = todayDay; // guardamos el día real
+let selectedRutina = null;
+let selectorVisible = false;
 
-// Cargar día seleccionado guardado (si existe)
-const savedDay = localStorage.getItem('sokoSelectedDay');
-if (savedDay && ROUTINE[savedDay]) {
-  selectedDay = savedDay;
+// Cargar rutina guardada
+const savedRutina = localStorage.getItem('sokoRutina');
+if (savedRutina && ['Piernas + Hombro','Pecho + Bíceps','Espalda + Tríceps','Hombro + Piernas','Descanso'].includes(savedRutina)) {
+  selectedRutina = savedRutina;
 }
-
 let histP = null;
 const _histEx = {};
 const selVariant = {};
 
+function getRutinaDelDiaReal() {
+  if (todayDay === 'Lunes') return 'Piernas + Hombro';
+  if (todayDay === 'Miercoles') return 'Pecho + Bíceps';
+  if (todayDay === 'Jueves') return 'Espalda + Tríceps';
+  if (todayDay === 'Viernes') return 'Hombro + Piernas';
+  return 'Descanso';
+}
+
+function getRutinaActual() {
+  if (selectedRutina) return selectedRutina;
+  return getRutinaDelDiaReal();
+}
+
+function actualizarUI() {
+  const rutinaActual = getRutinaActual();
+  const badge = document.getElementById('rutinaActualBadge');
+  if (badge) {
+    const emojis = {
+      'Piernas + Hombro': '🦵', 'Pecho + Bíceps': '💪',
+      'Espalda + Tríceps': '🔙', 'Hombro + Piernas': '🔝',
+      'Descanso': '😴'
+    };
+    badge.innerHTML = `${emojis[rutinaActual] || '🏋️'} ${rutinaActual}`;
+  }
+  const fechaDisplay = document.getElementById('fechaDisplay');
+  if (fechaDisplay) {
+    const fechaFormateada = today.toLocaleDateString('es-AR', { weekday:'long', day:'numeric', month:'long' }).toUpperCase();
+    fechaDisplay.textContent = fechaFormateada;
+  }
+  let rutinaParaEjercicios = null;
+  if (rutinaActual === 'Piernas + Hombro') rutinaParaEjercicios = ROUTINE.Lunes;
+  else if (rutinaActual === 'Pecho + Bíceps') rutinaParaEjercicios = ROUTINE.Miercoles;
+  else if (rutinaActual === 'Espalda + Tríceps') rutinaParaEjercicios = ROUTINE.Jueves;
+  else if (rutinaActual === 'Hombro + Piernas') rutinaParaEjercicios = ROUTINE.Viernes;
+  else rutinaParaEjercicios = { exercises: [] };
+  window.rutinaActualTemp = rutinaParaEjercicios;
+ if (!document.getElementById('gymView').classList.contains('hidden')) {
+  buildDayExList();
+  buildWeekStrip(); // ← esta línea debe estar
+}
+}
+
+function toggleSelectorRutina() {
+  console.log('toggleSelectorRutina ejecutado'); // <-- agregar esto
+  const container = document.getElementById('selectorRutinaContainer');
+  if (!container) return;
+  if (selectorVisible) {
+    container.style.display = 'none';
+    selectorVisible = false;
+  } else {
+    container.style.display = 'flex';
+    selectorVisible = true;
+    const rutinaActual = getRutinaActual();
+    document.querySelectorAll('.rutina-option').forEach(btn => {
+      const rutina = btn.getAttribute('data-rutina');
+      if (rutina === rutinaActual) btn.classList.add('active');
+      else btn.classList.remove('active');
+    });
+  }
+}
+
+async function seleccionarRutina(rutina) {
+  selectedRutina = rutina;
+  console.log('selectedRutina actualizada a:', selectedRutina);
+  localStorage.setItem('sokoRutina', rutina);
+  
+  try {
+    await api({
+      action: 'setRutinaElegida',
+      fecha: todayStr,
+      dia_semana: todayDay,
+      persona: ME,
+      rutina: rutina
+    });
+    showToast(`Rutina cambiada a: ${rutina}`, 'ok');
+  } catch(e) {
+    console.error('Error guardando rutina:', e);
+    showToast('Error al guardar la rutina', 'err');
+  }
+  
+  actualizarUI();
+}
+
+function resetearRutina() {
+  selectedRutina = null;
+  localStorage.removeItem('sokoRutina');
+  toggleSelectorRutina();
+  actualizarUI();
+  showToast('Rutina restablecida al día real', 'ok');
+}
+
+// ── LOGIN ─────────────────────────────────────────────────
+function buildLogin(){
+  const g=document.getElementById('loginGrid');g.innerHTML='';
+  PERSONS.forEach(p=>{
+    const b=document.createElement('div');b.className='login-btn';
+    b.innerHTML=`<div class="lav" style="background:${COLORS[p]}22;color:${COLORS[p]}">${PI[p]}</div><div class="lnm">${p}</div>`;
+    b.onclick=()=>login(p);g.appendChild(b);
+  });
+}
+
+async function cargarRutinaDesdeSheet() {
+  try {
+    const data = await api({action:'getAsistencia', fecha:todayStr});
+    const rutinaGuardada = data.musculo;
+    if (rutinaGuardada && ['Piernas + Hombro','Pecho + Bíceps','Espalda + Tríceps','Hombro + Piernas','Descanso'].includes(rutinaGuardada)) {
+      selectedRutina = rutinaGuardada;
+      localStorage.setItem('sokoRutina', rutinaGuardada);
+    }
+  } catch(e) {
+    console.error('Error cargando rutina del sheet:', e);
+  }
+}
+
+function login(p){
+  ME=p;localStorage.setItem('sokoUser',p);
+  document.getElementById('loginScreen').classList.add('hidden');
+  document.getElementById('app').classList.remove('hidden');
+  document.getElementById('navBar').classList.remove('hidden');
+  initApp();
+}
+function logout(){
+  if(!confirm('¿Cambiar de usuario?'))return;
+  localStorage.removeItem('sokoUser');ME=null;
+  document.getElementById('app').classList.add('hidden');
+  document.getElementById('navBar').classList.add('hidden');
+  document.getElementById('loginScreen').classList.remove('hidden');
+}
+async function initApp(){
+  cache={asistencia:null,pesos:{},records:null};histP=ME;
+  const av=document.getElementById('ucAv');
+  av.textContent=PI[ME];av.style.background=COLORS[ME];av.style.color='#000';
+  document.getElementById('ucName').textContent=ME;
+  renderBanner();
+  await cargarRutinaDesdeSheet();
+  actualizarUI();
+  showPage('hoy');
+}
 // ── UTILS ─────────────────────────────────────────────────
 function normDate(v){
   if(!v)return'';
@@ -557,33 +702,6 @@ async function loadRecords(){
   }catch(e){cache.records=[];}
 }
 
-function actualizarVistaPorDia() {
-  const diaActualMostrar = selectedDay || diaReal;
-  const esDescanso = !ROUTINE[diaActualMostrar] || ROUTINE[diaActualMostrar].exercises.length === 0;
-  
-  // Actualizar badge
-  const badge = document.getElementById('diaActualBadge');
-  if (badge) {
-    const emoji = { Lunes:'🦵', Martes:'😴', Miercoles:'💪', Jueves:'🔙', Viernes:'🔝', Sabado:'😴', Domingo:'😴' };
-    const mostrarDia = selectedDay ? `${selectedDay} (elegido)` : `${diaReal} (real)`;
-    badge.innerHTML = `HOY: <span id="diaRealLabel">${emoji[diaActualMostrar] || '🏋️'} ${mostrarDia}</span>`;
-  }
-  
-  // Si estamos en la página de hoy, recargar las vistas
-  if (!document.getElementById('gymView').classList.contains('hidden')) {
-    buildWeekStrip();
-    buildAttendance();
-    buildDayExList();
-  }
-  
-  // Mensaje gracioso si es descanso
-  if (esDescanso && !selectedDay) {
-    showToast('😴 Hoy es día de descanso... ¡pero podés cambiarlo con "CAMBIAR DÍA"!', 'ok');
-  } else if (selectedDay && (ROUTINE[selectedDay]?.exercises.length === 0)) {
-    showToast('💪 ¡Entrenás igual! El descanso es para los débiles.', 'ok');
-  }
-}
-
 // ── LOGIN ─────────────────────────────────────────────────
 function buildLogin(){
   const g=document.getElementById('loginGrid');g.innerHTML='';
@@ -612,27 +730,16 @@ function initApp(){
   const av=document.getElementById('ucAv');
   av.textContent=PI[ME];av.style.background=COLORS[ME];av.style.color='#000';
   document.getElementById('ucName').textContent=ME;
-  renderBanner();function initApp(){
-  cache={asistencia:null,pesos:{},records:null};histP=ME;
-  const av=document.getElementById('ucAv');
-  av.textContent=PI[ME];av.style.background=COLORS[ME];av.style.color='#000';
-  document.getElementById('ucName').textContent=ME;
   renderBanner();
-  actualizarVistaPorDia(); // ← agregar esta línea
+  actualizarUI();   // ← línea agregada
   showPage('hoy');
-}
 }
 
 // ── BANNER ────────────────────────────────────────────────
 function renderBanner(){
-  const r=ROUTINE[todayDay],el=document.getElementById('dayBanner');
-  const ds=today.toLocaleDateString('es-AR',{weekday:'long',day:'numeric',month:'long'}).toUpperCase();
-  if(isRest){
-    el.innerHTML=`<div><div class="db-label">${ds}</div><div class="db-title">😴 Día de descanso</div></div>`;
-  }else{
-    const idx=GYM_DAYS.indexOf(todayDay)+1;
-    el.innerHTML=`<div><div class="db-label">${ds}</div><div class="db-title">${r.emoji} ${r.muscle}</div></div><div class="day-badge">DÍA ${idx} DE 4</div>`;
-  }
+  const el = document.getElementById('dayBanner');
+  const ds = today.toLocaleDateString('es-AR', { weekday:'long', day:'numeric', month:'long' }).toUpperCase();
+  el.innerHTML = `<div class="db-label">${ds}</div>`;
 }
 
 // ── REST DAY ──────────────────────────────────────────────
@@ -666,12 +773,21 @@ function buildWeekStrip(){
   const el = document.getElementById('weekStrip');
   if (!el) return;
   el.innerHTML = '';
-  const diaActivo = selectedDay || todayDay; // ← usar día seleccionado o real
+  const rutinaActual = getRutinaActual();
   GYM_DAYS.forEach(d => {
     const r = ROUTINE[d];
+    let grupoMuscular = '';
+    if (d === 'Lunes') grupoMuscular = 'Piernas + Hombro';
+    else if (d === 'Miercoles') grupoMuscular = 'Pecho + Bíceps';
+    else if (d === 'Jueves') grupoMuscular = 'Espalda + Tríceps';
+    else if (d === 'Viernes') grupoMuscular = 'Hombro + Piernas';
+    
+    const isActive = (rutinaActual === grupoMuscular);
     const div = document.createElement('div');
-    div.className = 'wday' + (d === diaActivo ? ' active' : '');
-    div.innerHTML = `<div class="wd-name">${d.slice(0,3)}</div><div class="wd-emoji">${r.emoji}</div><div class="wd-muscle">${r.muscle}</div>`;
+    div.className = 'wday' + (isActive ? ' active' : '');
+    div.style.cursor = 'pointer';
+    div.onclick = () => seleccionarRutina(grupoMuscular);
+    div.innerHTML = `<div class="wd-emoji" style="font-size:1.4rem">${r.emoji}</div><div class="wd-muscle">${r.muscle}</div>`;
     el.appendChild(div);
   });
 }
@@ -692,10 +808,17 @@ async function setAttendance(valor){
 }
 async function buildAttendance(){
   setSyncStatus('syncing');
-  try{cache.asistencia=await api({action:'getAsistencia',fecha:todayStr});setSyncStatus('ok');}
-  catch(e){setSyncStatus('error');}
+  try{
+    const data = await api({action:'getAsistencia', fecha:todayStr});
+    cache.asistencia = data;
+    setSyncStatus('ok');
+  } catch(e){
+    setSyncStatus('error');
+    cache.asistencia = {};
+  }
   renderAttendance();
 }
+
 function renderAttendance(){
   const d=cache.asistencia||{};
   const val=d[ME.toLowerCase()];
@@ -747,8 +870,7 @@ function promptAltura(){
 async function buildDayExList(){
   const el = document.getElementById('dayExList');
   if (!el) return;
-  const diaRutina = selectedDay || todayDay; // ← usar día seleccionado o real
-  const r = ROUTINE[diaRutina];
+const r = window.rutinaActualTemp || ROUTINE[todayDay];
   if (!r || !r.exercises.length) {
     el.innerHTML = `<div style="background:var(--card);border:1.5px solid var(--border);border-radius:14px;padding:30px;text-align:center">
       <div style="font-size:2rem;margin-bottom:8px">😴</div>
@@ -1634,23 +1756,11 @@ if (timerReset) timerReset.onclick = resetearTimer;
 function showPage(id){
   ['restView','gymView','pageHistorial','pageStats','pageReloj'].forEach(p=>document.getElementById(p).classList.add('hidden'));
   if(id==='hoy'){
-    // Si hay un día seleccionado, mostrar gymView
-    if (selectedDay) {
-      document.getElementById('gymView').classList.remove('hidden');
-      actualizarVistaPorDia();
-      buildWeekStrip();
-      buildAttendance();
-      buildDayExList();
-    }
-    // Si no hay día seleccionado y es descanso real, mostrar restView
-    else if (isRest) {
+    if (isRest) {
       document.getElementById('restView').classList.remove('hidden');
       buildRestDay();
-    }
-    // Si no hay día seleccionado y NO es descanso, mostrar gymView
-    else {
+    } else {
       document.getElementById('gymView').classList.remove('hidden');
-      actualizarVistaPorDia();
       buildWeekStrip();
       buildAttendance();
       buildDayExList();
@@ -1667,82 +1777,18 @@ function switchPage(el){
   el.classList.add('active');showPage(el.dataset.page);
 }
 
-// ── SELECCIONAR DÍA DE RUTINA ────────────────────────────
-function abrirModalDias() {
-  const modal = document.getElementById('modalDias');
-  const grid = document.getElementById('diasSelectorGrid');
-  if (!modal || !grid) return;
-  
-  const dias = ['Lunes', 'Martes', 'Miercoles', 'Jueves', 'Viernes', 'Sabado', 'Domingo'];
-  const emojis = { Lunes:'🦵', Martes:'😴', Miercoles:'💪', Jueves:'🔙', Viernes:'🔝', Sabado:'😴', Domingo:'😴' };
-  
-  grid.innerHTML = dias.map(dia => {
-    const r = ROUTINE[dia];
-    const isActive = selectedDay === dia;
-    const isReal = dia === diaReal;
-    const realBadge = isReal ? '<span style="font-size:.55rem;background:#00c89622;padding:2px 6px;border-radius:10px;margin-left:4px">HOY</span>' : '';
-    return `
-      <div class="dia-option ${isActive ? 'active' : ''}" onclick="seleccionarDia('${dia}')">
-        <div class="dia-emoji">${emojis[dia] || '🏋️'}</div>
-        <div class="dia-name">${dia} ${realBadge}</div>
-        <div class="dia-muscle">${r?.muscle || 'Descanso'}</div>
-      </div>
-    `;
-  }).join('');
-  
-  modal.classList.add('open');
-}
+// Conectar botones de cambio de rutina
+document.addEventListener('DOMContentLoaded', function() {
+const btnCambiar = document.getElementById('cambiarRutinaBtn');
+if (btnCambiar) btnCambiar.onclick = toggleSelectorRutina;
 
-function cerrarModalDias() {
-  document.getElementById('modalDias')?.classList.remove('open');
-}
+document.querySelectorAll('.rutina-option').forEach(btn => {
+  btn.onclick = () => seleccionarRutina(btn.getAttribute('data-rutina'));
+});
 
-function seleccionarDia(dia) {
-  selectedDay = dia;
-  localStorage.setItem('sokoSelectedDay', dia); // ← agregar esta línea
-  cerrarModalDias();
-  actualizarVistaPorDia();
-}
-
-function resetearDiaReal() {
-  selectedDay = null;
-  localStorage.removeItem('sokoSelectedDay'); // ← agregar esta línea
-  cerrarModalDias();
-  actualizarVistaPorDia();
-}
-
-function actualizarVistaPorDia() {
-  const diaActualMostrar = selectedDay || diaReal;
-  const esDescanso = !ROUTINE[diaActualMostrar] || ROUTINE[diaActualMostrar].exercises.length === 0;
-  
-  // Actualizar badge (funciona aunque esté en restView)
-  const badge = document.getElementById('diaActualBadge');
-  if (badge) {
-    const emoji = { Lunes:'🦵', Martes:'😴', Miercoles:'💪', Jueves:'🔙', Viernes:'🔝', Sabado:'😴', Domingo:'😴' };
-    const mostrarDia = selectedDay ? `${selectedDay} (elegido)` : `${diaReal} (real)`;
-    badge.innerHTML = `HOY: <span id="diaRealLabel">${emoji[diaActualMostrar] || '🏋️'} ${mostrarDia}</span>`;
-  }
-  
-  // Si estamos en la página de hoy, recargar las vistas
-  if (!document.getElementById('gymView').classList.contains('hidden')) {
-    buildWeekStrip();
-    buildAttendance();
-    buildDayExList();
-  }
-  
-  // Mensaje gracioso si es descanso
-  if (esDescanso && !selectedDay) {
-    showToast('😴 Hoy es día de descanso... ¡pero podés cambiarlo con "CAMBIAR DÍA"!', 'ok');
-  } else if (selectedDay && (ROUTINE[selectedDay]?.exercises.length === 0)) {
-    showToast('💪 ¡Entrenás igual! El descanso es para los débiles.', 'ok');
-  }
-}
-
-// Conectar botones de cambio de día
-const btnCambiar = document.getElementById('cambiarDiaBtnGlobal');
-if (btnCambiar) btnCambiar.onclick = abrirModalDias;
-const btnReset = document.getElementById('btnResetDia');
-if (btnReset) btnReset.onclick = resetearDiaReal;
+const btnReset = document.getElementById('resetRutinaBtn');
+if (btnReset) btnReset.onclick = resetearRutina;
+});
 
 // ── BOOT ──────────────────────────────────────────────────
 buildLogin();
