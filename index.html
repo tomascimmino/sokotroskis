@@ -291,8 +291,7 @@ header{background:#0d0d0d;padding:8px 18px;border-bottom:1px solid var(--border)
     <div class="section" style="padding:16px 16px 0">
       <div class="section-title">Hoy hacemos...</div>
       <div class="week-strip" id="weekStrip"></div>
-      <div style="text-align:center;margin-top:8px">
-</div>
+      <div style="text-align:center;margin-top:8px" id="resetRutinaWrap"></div>
     </div>
     <div style="padding:0 16px">
       <div class="section" style="margin-top:20px">
@@ -551,16 +550,15 @@ function toggleSelectorRutina() {
 async function seleccionarRutina(rutina) {
   selectedRutina = rutina;
   localStorage.setItem('sokoRutina', rutina);
-  actualizarUI();
   showToast(`✅ ${rutina}`, 'ok');
+  showPage('hoy');
 }
 
 function resetearRutina() {
   selectedRutina = null;
   localStorage.removeItem('sokoRutina');
-  toggleSelectorRutina();
-  actualizarUI();
   showToast('Rutina restablecida al día real', 'ok');
+  showPage('hoy');
 }
 
 // ── LOGIN ─────────────────────────────────────────────────
@@ -675,8 +673,24 @@ async function buildRestDay(){
   const totalDays=Math.max(1,...Object.values(cnt));
   // Ordenar personas de mayor a menor asistencia
   const sortedPersons=[...PERSONS].sort((a,b)=>cnt[b]-cnt[a]);
+  const rutinaOpts=[
+    {rutina:'Piernas + Hombro',emoji:'🦵',day:'Lunes'},
+    {rutina:'Pecho + Bíceps',emoji:'💪',day:'Miercoles'},
+    {rutina:'Espalda + Tríceps',emoji:'🔙',day:'Jueves'},
+    {rutina:'Hombro + Piernas',emoji:'🔝',day:'Viernes'},
+  ];
   document.getElementById('restView').innerHTML=`
-    <div class="rest-hero"><div class="rest-big">💤</div><h2>Día de descanso</h2><p>El músculo crece cuando descansás.<br>Hoy toca recuperar, mañana volvemos con todo.</p></div>
+    <div class="rest-hero"><div class="rest-big">💤</div><h2>Día de descanso</h2><p>El músculo crece cuando descansás.<br>¿Igual querés entrenar? Elegí un grupo:</p></div>
+    <div class="info-card" style="margin-bottom:10px">
+      <div class="info-card-title">Entrenar igual hoy</div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
+        ${rutinaOpts.map(o=>`
+          <button onclick="seleccionarRutina('${o.rutina}')" style="background:var(--card2);border:1.5px solid var(--border);border-radius:12px;padding:12px 8px;cursor:pointer;font-family:'Inter',sans-serif;text-align:center;transition:border-color .2s">
+            <div style="font-size:1.4rem;margin-bottom:4px">${o.emoji}</div>
+            <div style="font-size:.68rem;font-weight:700;color:var(--text)">${o.rutina}</div>
+          </button>`).join('')}
+      </div>
+    </div>
     ${next?`<div class="info-card"><div class="info-card-title">Próximo entrenamiento</div><div class="next-row"><div><div class="next-name">${ROUTINE[next].muscle}</div><div class="next-day">${next}</div></div><div class="next-emoji">${ROUTINE[next].emoji}</div></div></div>`:''}
     <div class="info-card"><div class="info-card-title">Asistencia del grupo — ${today.toLocaleDateString('es-AR',{month:'long'})}</div>
       ${sortedPersons.map(p=>`<div class="ra-row"><div class="ra-person"><div class="ra-av" style="color:${COLORS[p]}">${PI[p]}</div><div class="ra-name">${p}${p===ME?' ●':''}</div></div><div class="ra-bar-wrap"><div class="ra-bar" style="width:${Math.round(cnt[p]/maxCnt*100)}%;background:${COLORS[p]}"></div></div><div class="ra-count" style="color:${COLORS[p]}">${cnt[p]}</div></div>`).join('')}
@@ -694,6 +708,7 @@ function buildWeekStrip(){
   if (!el) return;
   el.innerHTML = '';
   const rutinaActual = getRutinaActual();
+  const rutinaReal = getRutinaDelDiaReal();
   GYM_DAYS.forEach(d => {
     const r = ROUTINE[d];
     let grupoMuscular = '';
@@ -701,7 +716,6 @@ function buildWeekStrip(){
     else if (d === 'Miercoles') grupoMuscular = 'Pecho + Bíceps';
     else if (d === 'Jueves') grupoMuscular = 'Espalda + Tríceps';
     else if (d === 'Viernes') grupoMuscular = 'Hombro + Piernas';
-    
     const isActive = (rutinaActual === grupoMuscular);
     const div = document.createElement('div');
     div.className = 'wday' + (isActive ? ' active' : '');
@@ -710,6 +724,15 @@ function buildWeekStrip(){
     div.innerHTML = `<div class="wd-emoji" style="font-size:1.4rem">${r.emoji}</div><div class="wd-muscle">${r.muscle}</div>`;
     el.appendChild(div);
   });
+  // Mostrar botón reset si la rutina activa es diferente a la del día real
+  const wrap = document.getElementById('resetRutinaWrap');
+  if (wrap) {
+    if (selectedRutina && rutinaActual !== rutinaReal) {
+      wrap.innerHTML = `<button onclick="resetearRutina()" style="background:none;border:1px solid var(--border);border-radius:8px;padding:4px 12px;font-size:.62rem;color:var(--muted);cursor:pointer;font-family:'Inter',sans-serif">↩ Volver al día real</button>`;
+    } else {
+      wrap.innerHTML = '';
+    }
+  }
 }
 
 // ── ATTENDANCE ────────────────────────────────────────────
@@ -1631,13 +1654,14 @@ function cambiarStatsPeriodo(periodo) {
 function showPage(id){
   ['restView','gymView','pageHistorial','pageStats'].forEach(p=>document.getElementById(p).classList.add('hidden'));
   if(id==='hoy'){
-    if (isRest) {
+    // Si hay rutina seleccionada manualmente, siempre mostrar gymView
+    const forceGym = !!selectedRutina;
+    if (isRest && !forceGym) {
       document.getElementById('restView').classList.remove('hidden');
       buildRestDay();
     } else {
       document.getElementById('gymView').classList.remove('hidden');
       buildWeekStrip();
-      // Cargar asistencia y ejercicios en paralelo
       Promise.all([buildAttendance(), buildDayExList()]);
     }
   }else{
