@@ -522,10 +522,11 @@ function actualizarUI() {
   else if (rutinaActual === 'Hombro + Piernas') rutinaParaEjercicios = ROUTINE.Viernes;
   else rutinaParaEjercicios = { exercises: [] };
   window.rutinaActualTemp = rutinaParaEjercicios;
- if (!document.getElementById('gymView').classList.contains('hidden')) {
-  buildDayExList();
-  buildWeekStrip(); // ← esta línea debe estar
-}
+  // Solo rebuild si gymView está visible
+  if (!document.getElementById('gymView').classList.contains('hidden')) {
+    buildWeekStrip();
+    buildDayExList();
+  }
 }
 
 function toggleSelectorRutina() {
@@ -549,24 +550,9 @@ function toggleSelectorRutina() {
 
 async function seleccionarRutina(rutina) {
   selectedRutina = rutina;
-  console.log('selectedRutina actualizada a:', selectedRutina);
   localStorage.setItem('sokoRutina', rutina);
-  
-  try {
-    await api({
-      action: 'setRutinaElegida',
-      fecha: todayStr,
-      dia_semana: todayDay,
-      persona: ME,
-      rutina: rutina
-    });
-    showToast(`Rutina cambiada a: ${rutina}`, 'ok');
-  } catch(e) {
-    console.error('Error guardando rutina:', e);
-    showToast('Error al guardar la rutina', 'err');
-  }
-  
   actualizarUI();
+  showToast(`✅ ${rutina}`, 'ok');
 }
 
 function resetearRutina() {
@@ -578,27 +564,6 @@ function resetearRutina() {
 }
 
 // ── LOGIN ─────────────────────────────────────────────────
-function buildLogin(){
-  const g=document.getElementById('loginGrid');g.innerHTML='';
-  PERSONS.forEach(p=>{
-    const b=document.createElement('div');b.className='login-btn';
-    b.innerHTML=`<div class="lav" style="background:${COLORS[p]}22;color:${COLORS[p]}">${PI[p]}</div><div class="lnm">${p}</div>`;
-    b.onclick=()=>login(p);g.appendChild(b);
-  });
-}
-
-async function cargarRutinaDesdeSheet() {
-  try {
-    const data = await api({action:'getAsistencia', fecha:todayStr});
-    const rutinaGuardada = data.musculo;
-    if (rutinaGuardada && ['Piernas + Hombro','Pecho + Bíceps','Espalda + Tríceps','Hombro + Piernas','Descanso'].includes(rutinaGuardada)) {
-      selectedRutina = rutinaGuardada;
-      localStorage.setItem('sokoRutina', rutinaGuardada);
-    }
-  } catch(e) {
-    console.error('Error cargando rutina del sheet:', e);
-  }
-}
 
 function login(p){
   ME=p;localStorage.setItem('sokoUser',p);
@@ -620,7 +585,6 @@ async function initApp(){
   av.textContent=PI[ME];av.style.background=COLORS[ME];av.style.color='#000';
   document.getElementById('ucName').textContent=ME;
   renderBanner();
-  await cargarRutinaDesdeSheet();
   actualizarUI();
   showPage('hoy');
 }
@@ -691,30 +655,6 @@ function buildLogin(){
     b.onclick=()=>login(p);g.appendChild(b);
   });
 }
-function login(p){
-  ME=p;localStorage.setItem('sokoUser',p);
-  document.getElementById('loginScreen').classList.add('hidden');
-  document.getElementById('app').classList.remove('hidden');
-  document.getElementById('navBar').classList.remove('hidden');
-  initApp();
-}
-function logout(){
-  if(!confirm('¿Cambiar de usuario?'))return;
-  localStorage.removeItem('sokoUser');ME=null;
-  document.getElementById('app').classList.add('hidden');
-  document.getElementById('navBar').classList.add('hidden');
-  document.getElementById('loginScreen').classList.remove('hidden');
-}
-function initApp(){
-  cache={asistencia:null,pesos:{},records:null};histP=ME;
-  const av=document.getElementById('ucAv');
-  av.textContent=PI[ME];av.style.background=COLORS[ME];av.style.color='#000';
-  document.getElementById('ucName').textContent=ME;
-  renderBanner();
-  actualizarUI();   // ← línea agregada
-  showPage('hoy');
-}
-
 // ── BANNER ────────────────────────────────────────────────
 function renderBanner(){
   const el = document.getElementById('dayBanner');
@@ -859,8 +799,7 @@ const r = window.rutinaActualTemp || ROUTINE[todayDay];
     </div>`;
     return;
   }
-  await loadPesos(ME);
-  await loadRecords();
+  await Promise.all([loadPesos(ME), loadRecords()]);
   renderBWCardHoy();
   el.innerHTML = '';
   r.exercises.forEach((ex,i)=>{
@@ -1444,8 +1383,7 @@ async function buildHistPage(){
     return;
   }
 
-  await loadPesos(histP);
-  await loadRecords();
+  await Promise.all([loadPesos(histP), loadRecords()]);
 
   let html='';
 
@@ -1699,8 +1637,8 @@ function showPage(id){
     } else {
       document.getElementById('gymView').classList.remove('hidden');
       buildWeekStrip();
-      buildAttendance();
-      buildDayExList();
+      // Cargar asistencia y ejercicios en paralelo
+      Promise.all([buildAttendance(), buildDayExList()]);
     }
   }else{
     document.getElementById(id).classList.remove('hidden');
